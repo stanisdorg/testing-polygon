@@ -4,26 +4,39 @@
 
 **URL:** https://localhost:8443
 
-**Токен для входа (действует 24 часа):**
+### 🎯 Способ 1: Постоянный токен (рекомендуется)
+
+**Скопируй этот токен и используй его при каждом входе:**
 ```
 eyJhbGciOiJSUzI1NiIsImtpZCI6IlJjcFh4aEE5V2ZaVmVnSDhkTUwzN19mRkxtcTRJMDg4c09sRVRH
-UmM5Y0EifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jY
-WwiXSwiZXhwIjoxNzc2MTA4ODA4LCJpYXQiOjE3NzYwMjI0MDgsImlzcyI6Imh0dHBzOi8va3ViZXJuZ
-XRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiYmE0NzBmNjQtOWJmOC00NDViLThiZ
-TktNWQxNGVlYjJkZmMzIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc
-2hib2FyZCIsInNlcnZpY2VhY2NvdW50Ijp7Im5hbWUiOiJhZG1pbi11c2VyIiwidWlkIjoiOTQ3MzRiM
-DItNTRiYy00ZjZhLThiN2QtNGRjNGJjMDNiYzgyIn19LCJuYmYiOjE3NzYwMjI0MDgsInN1YiI6InN5c
-3RlbTpzZXJ2aWNlYWNjb3VudDprdWJlcm5ldGVzLWRhc2hib2FyZDphZG1pbi11c2VyIn0.vBSBbZ6MY
-DOmS-NMuVwfKSvzMOpepP599kwELv8pF7AkKQPu1O2e7azFsQC_QFrrPafSRYdGkM89JMtpEqkqX3teI
-9O78e75bcNTRi0bLC1X1ZLIaWwbs_yMfyrZhpj0tRkJQKUtKr3xbY2bRAABOQ-nCdcKTtgCaYIEkJbI3
-MbvZ2aUj6pjUjNFWmv_cJSQFUS_gH3fAjtN7Vi6XtgcvkeAPIJIrv9SWrxQs7bSImOxh-a7SgxOQG-KZ
-rLv-PSvO9uqelzKuk94S2MI8k9dU_Sna2lGipjmNWutHQyhcVLc_51MhU-3gzv2ijJlF_5449n6vxdzh
-NciQ6JGyyBI2A
+UmM5Y0EifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZ
+XJ2aWNlYWNjb3VudC9uYW1lc3BhY2UiOiJrdWJlcm5ldGVzLWRhc2hib2FyZCIsImt1YmVybmV0ZXMua
+W8vc2VydmljZWFjY291bnQvc2VjcmV0Lm5hbWUiOiJhZG1pbi11c2VyLXRva2VuIiwia3ViZXJuZXRlc
+y5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImFkbWluLXVzZXIiLCJrdWJlc
+m5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlcnZpY2UtYWNjb3VudC51aWQiOiI5NDczNGIwMi01NGJjL
+TRmNmEtOGI3ZC00ZGM0YmMwM2JjODIiLCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6a3ViZXJuZ
+XRlcy1kYXNoYm9hcmQ6YWRtaW4tdXNlciJ9.WF_5zqGd2_Qbpf7NyPDRE3wq0Axq_hFMDR7ERVJMnSt2
+6A4WpEiGBVP75ldGbCExVwEXVCib6R_OGzwaTfOqrP9_mdJoMR8nlRRrrt0EGwjElf0tNQFPIsTc0eEx
+nwUAUCfNBls7fzi2Lt5jVlY7Vn8tIaWifmkATdDkgoLAL6sUOfuihLwB6kjahe8--9fAPjLoghD7s-Lx
+sMPMoOItOkRtVsSi9_g9EppYXSg7ktFtwdJbPYngw6ePH_3sGY2YlWPS11Yl7umkqc7JMriZoN0adwH3
+PswpD7d0JmXMg6bFM4p8nSDLsjsnFhalVNTbMoDDNju5icaHzqaLuSXz_Q
+```
+> ⚠️ **Этот токен НЕ истекает** — сохрани его и используй всегда!
+
+### 🔑 Способ 2: Kubeconfig (без копирования токена)
+
+1. На странице входа выбери **"Kubeconfig"**
+2. Нажми **"Choose kubeconfig file"**
+3. Создай файл `~/.kube/dashboard-config` с содержимым из команды:
+```bash
+kubectl get secret admin-user-token -n kubernetes-dashboard -o jsonpath='{.data.token}' | base64 -d
 ```
 
-**Или получи новый токен:**
+### 🔄 Если токен всё равно не работает
+
+Получи новый постоянный токен:
 ```bash
-kubectl -n kubernetes-dashboard create token admin-user
+kubectl get secret admin-user-token -n kubernetes-dashboard -o jsonpath='{.data.token}' | base64 -d
 ```
 
 ---
