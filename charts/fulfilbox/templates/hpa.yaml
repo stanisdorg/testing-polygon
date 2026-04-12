@@ -1,0 +1,22 @@
+{{- if .Values.orderService.hpa.enabled }}
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ .Release.Name }}-order-service-hpa
+  labels:
+    {{- include "fulfilbox.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ .Release.Name }}-order-service
+  minReplicas: {{ .Values.orderService.hpa.minReplicas }}
+  maxReplicas: {{ .Values.orderService.hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.orderService.hpa.targetCPUUtilizationPercentage }}
+{{- end }}

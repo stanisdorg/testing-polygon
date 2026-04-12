@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FulfilBox — Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e4e9; }
+
+        /* Header */
+        header { background: #161922; padding: 12px 24px; border-bottom: 1px solid #2a2e3d; }
+        .header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+        header h1 { font-size: 18px; color: #6c63ff; }
+        header h1 span { color: #8b8fa3; font-size: 12px; font-weight: 400; margin-left: 8px; }
+        .nav-links { display: flex; gap: 6px; flex-wrap: wrap; }
+        .nav-link { background: #1e2230; border: 1px solid #2a2e3d; color: #8b8fa3; padding: 4px 10px; border-radius: 4px; font-size: 11px; text-decoration: none; cursor: pointer; }
+        .nav-link:hover { color: #e2e4e9; border-color: #6c63ff; }
+
+        /* Search bar */
+        .search-bar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .search-input { background: #0f1117; border: 1px solid #2a2e3d; color: #e2e4e9; padding: 6px 12px; border-radius: 6px; font-size: 12px; width: 180px; }
+        .search-input:focus { outline: none; border-color: #6c63ff; }
+        .search-select { background: #0f1117; border: 1px solid #2a2e3d; color: #e2e4e9; padding: 6px 10px; border-radius: 6px; font-size: 12px; }
+        .search-btn { background: #6c63ff; border: none; color: #fff; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .search-btn:hover { background: #5a52e0; }
+        .clear-btn { background: none; border: 1px solid #2a2e3d; color: #8b8fa3; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .clear-btn:hover { color: #e74c3c; border-color: #e74c3c; }
+
+        /* Main */
+        .container { max-width: 1400px; margin: 16px auto; padding: 0 24px; }
+        .refresh-btn { background: none; border: 1px solid #2a2e3d; color: #8b8fa3; padding: 4px 10px; border-radius: 4px; cursor: pointer; font-size: 11px; }
+        .refresh-btn:hover { color: #e2e4e9; border-color: #6c63ff; }
+        .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .kpi { background: #1e2230; border: 1px solid #2a2e3d; border-radius: 10px; padding: 16px; text-align: center; }
+        .kpi-value { font-size: 28px; font-weight: 800; color: #6c63ff; }
+        .kpi-label { font-size: 11px; color: #8b8fa3; text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+        @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+        .card { background: #1e2230; border: 1px solid #2a2e3d; border-radius: 10px; padding: 16px; }
+        .card h3 { font-size: 13px; color: #6c63ff; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* Filterable links */
+        .filter-link { color: #6c63ff; cursor: pointer; text-decoration: none; }
+        .filter-link:hover { text-decoration: underline; color: #8b83ff; }
+
+        /* Events */
+        .event-item { padding: 6px 8px; border-bottom: 1px solid #2a2e3d; font-size: 11px; display: flex; gap: 6px; align-items: center; cursor: pointer; transition: background 0.1s; flex-wrap: wrap; }
+        .event-item:hover { background: rgba(108,99,255,0.08); }
+        .event-time { color: #8b8fa3; font-family: monospace; min-width: 120px; }
+        .event-type { color: #6c63ff; font-weight: 600; }
+        .event-order { color: #e2e4e9; }
+        .trace-badge { background: #2a2e3d; color: #6c63ff; padding: 1px 5px; border-radius: 3px; font-size: 9px; font-family: monospace; cursor: pointer; }
+        .trace-badge:hover { background: #6c63ff; color: #fff; }
+
+        /* Workers table */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 6px 8px; color: #8b8fa3; font-size: 10px; text-transform: uppercase; border-bottom: 1px solid #2a2e3d; }
+        td { padding: 6px 8px; font-size: 12px; border-bottom: 1px solid #1e2230; }
+        .worker-group { margin-bottom: 10px; }
+        .worker-group-title { font-size: 12px; font-weight: 700; color: #6c63ff; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+        .worker-count { color: #8b8fa3; font-weight: 400; font-size: 10px; }
+        .worker-row { cursor: pointer; }
+        .worker-row:hover { background: rgba(108,99,255,0.08); }
+        .role-icon { font-size: 14px; }
+
+        /* Worker modal */
+        .worker-modal-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .worker-modal-stat { background: #161922; border: 1px solid #2a2e3d; border-radius: 6px; padding: 8px; text-align: center; }
+        .worker-modal-stat-val { font-size: 20px; font-weight: 700; color: #6c63ff; }
+        .worker-modal-stat-label { font-size: 10px; color: #8b8fa3; text-transform: uppercase; }
+        .order-list { max-height: 120px; overflow-y: auto; font-size: 11px; font-family: monospace; color: #e2e4e9; }
+        .order-list div { padding: 2px 0; border-bottom: 1px solid #1e2230; }
+
+        /* Funnel */
+        .funnel-step { margin-bottom: 4px; }
+        .funnel-label { font-size: 11px; color: #8b8fa3; display: flex; justify-content: space-between; }
+        .funnel-bar { background: #2a2e3d; border-radius: 3px; height: 18px; position: relative; }
+        .funnel-fill { background: linear-gradient(90deg, #6c63ff, #8b83ff); height: 100%; border-radius: 3px; }
+
+        /* Warehouses */
+        .wh-card { background: #161922; border: 1px solid #2a2e3d; border-radius: 6px; padding: 10px; margin-bottom: 6px; }
+        .wh-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+        .wh-name { font-weight: 600; cursor: pointer; color: #e2e4e9; }
+        .wh-name:hover { color: #6c63ff; }
+        .wh-bar { background: #2a2e3d; border-radius: 3px; height: 6px; overflow: hidden; margin-bottom: 4px; }
+        .wh-fill { height: 100%; border-radius: 3px; }
+        .wh-stats { display: flex; gap: 12px; font-size: 10px; color: #8b8fa3; }
+        .wh-stat { cursor: pointer; }
+        .wh-stat:hover { color: #6c63ff; }
+
+        /* Chaos */
+        .chaos-controls { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+        .chaos-btn { background: #2a2e3d; border: 1px solid #2a2e3d; color: #8b8fa3; padding: 3px 8px; border-radius: 3px; cursor: pointer; font-size: 10px; }
+        .chaos-btn.active { background: #e74c3c; color: #fff; border-color: #e74c3c; }
+        .time-btn.active { background: #6c63ff !important; color: #fff !important; border-color: #6c63ff !important; }
+
+        /* Modal */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #1e2230; border: 1px solid #2a2e3d; border-radius: 10px; padding: 20px; max-width: 600px; width: 90%; max-height: 80vh; overflow-y: auto; }
+        .modal h2 { font-size: 14px; color: #6c63ff; margin-bottom: 12px; display: flex; justify-content: space-between; }
+        .modal-close { background: none; border: none; color: #8b8fa3; font-size: 18px; cursor: pointer; }
+        .modal-close:hover { color: #e2e4e9; }
+        .trace-step { display: flex; gap: 10px; padding: 6px 0; border-bottom: 1px solid #2a2e3d; align-items: center; }
+        .trace-step:last-child { border-bottom: none; }
+        .trace-icon { width: 22px; height: 22px; background: #6c63ff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; flex-shrink: 0; }
+        .trace-info { flex: 1; }
+        .trace-event { font-weight: 600; font-size: 12px; }
+        .trace-time { font-size: 10px; color: #8b8fa3; font-family: monospace; }
+        .trace-copy { background: #2a2e3d; border: none; color: #6c63ff; padding: 2px 6px; border-radius: 3px; cursor: pointer; font-size: 9px; }
+        .trace-copy:hover { background: #6c63ff; color: #fff; }
+
+        /* Toast */
+        .toast { position: fixed; bottom: 16px; right: 16px; background: #2ecc71; color: #fff; padding: 6px 14px; border-radius: 5px; font-size: 11px; opacity: 0; transition: opacity 0.3s; z-index: 2000; }
+        .toast.show { opacity: 1; }
+
+        /* Active filters */
+        .active-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+        .filter-tag { background: #6c63ff; color: #fff; padding: 2px 8px; border-radius: 10px; font-size: 10px; display: flex; align-items: center; gap: 4px; cursor: default; }
+        .filter-tag .remove { cursor: pointer; font-weight: bold; }
+        .filter-tag .remove:hover { color: #e74c3c; }
+
+        .filter-hint { font-size: 10px; color: #8b8fa3; margin-top: 2px; }
+
+        /* Kanban Board */
+        .view-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+        .view-tab { background: #1e2230; border: 1px solid #2a2e3d; color: #8b8fa3; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+        .view-tab.active { background: #6c63ff; color: #fff; border-color: #6c63ff; }
+        .view-tab:hover:not(.active) { color: #e2e4e9; border-color: #6c63ff; }
+        .view-panel { display: none; }
+        .view-panel.active { display: block; }
+        .kanban-board { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; position: relative; cursor: grab; }
+        .kanban-board.dragging { cursor: grabbing; }
+        .kanban-board::-webkit-scrollbar { height: 8px; }
+        .kanban-board::-webkit-scrollbar-track { background: #161922; border-radius: 4px; }
+        .kanban-board::-webkit-scrollbar-thumb { background: #2a2e3d; border-radius: 4px; }
+        .kanban-board::-webkit-scrollbar-thumb:hover { background: #6c63ff; }
+        .kanban-scroll-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; background: #1e2230ee; border: 1px solid #2a2e3d; color: #e2e4e9; width: 32px; height: 60px; border-radius: 6px; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+        .kanban-scroll-btn:hover { background: #6c63ff; border-color: #6c63ff; }
+        .kanban-scroll-btn.left { left: 4px; }
+        .kanban-scroll-btn.right { right: 4px; }
+        .kanban-column { min-width: 220px; max-width: 260px; flex-shrink: 0; background: #161922; border: 1px solid #2a2e3d; border-radius: 8px; display: flex; flex-direction: column; }
+        .kanban-header { padding: 8px 10px; border-bottom: 1px solid #2a2e3d; display: flex; justify-content: space-between; align-items: center; }
+        .kanban-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kanban-count { background: #2a2e3d; color: #8b8fa3; border-radius: 10px; padding: 1px 7px; font-size: 10px; }
+        .kanban-cards { padding: 6px; overflow-y: auto; max-height: 65vh; flex: 1; }
+        .kanban-card { background: #1e2230; border: 1px solid #2a2e3d; border-radius: 6px; padding: 8px; margin-bottom: 6px; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+        .kanban-card:hover { border-color: #6c63ff; box-shadow: 0 0 0 1px #6c63ff44; }
+        .kanban-card.sla-breach { border-left: 3px solid #e74c3c; }
+        .kanban-card.sla-warn { border-left: 3px solid #f39c12; }
+        .kanban-card.sla-ok { border-left: 3px solid #2ecc71; }
+        .kc-order { font-weight: 600; font-size: 12px; margin-bottom: 2px; }
+        .kc-warehouse { font-size: 10px; color: #8b8fa3; }
+        .kc-employee { font-size: 10px; color: #6c63ff; margin-top: 2px; }
+        .kc-time { font-size: 10px; color: #8b8fa3; font-family: monospace; }
+        .kc-sla { font-size: 9px; margin-top: 3px; display: flex; align-items: center; gap: 3px; }
+        .kc-sla-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        .kc-sla-dot.breach { background: #e74c3c; }
+        .kc-sla-dot.warn { background: #f39c12; }
+        .kc-sla-dot.ok { background: #2ecc71; }
+        .kc-items { font-size: 9px; color: #8b8fa3; margin-top: 2px; }
+        .kc-price { font-size: 10px; color: #e2e4e9; font-weight: 600; }
+        .empty-col { padding: 20px 10px; text-align: center; color: #8b8fa3; font-size: 11px; }
+    </style>
+</head>
+<body>
+<header>
+    <div class="header-top">
+        <div>
+            <h1>📊 FulfilBox <span>Dashboard — клик по событию = путь заказа</span></h1>
+        </div>
+        <div class="nav-links">
+            <a class="nav-link" href="/tasks/" target="_blank">🎓 Задания</a>
+            <a class="nav-link" href="/events/live" target="_blank">📡 Live Events</a>
+            <a class="nav-link" href="http://localhost:3000" target="_blank">📊 Grafana</a>
+            <a class="nav-link" href="http://localhost:9090" target="_blank">🔥 Prometheus</a>
+            <a class="nav-link" href="http://localhost:9090/alerts" target="_blank">🚨 Alerts</a>
+            <a class="nav-link" href="/dashboard/?tab=redis" target="_blank">🔴 Redis</a>
+            <a class="nav-link" href="http://localhost:8085" target="_blank">🔴 Redis Commander</a>
+            <a class="nav-link" href="http://localhost:5601" target="_blank">🔍 Kibana</a>
+            <a class="nav-link" href="http://localhost:8081" target="_blank">📨 AKHQ (Kafka UI)</a>
+            <a class="nav-link" href="/dashboard/?tab=kafka" target="_blank">📨 Kafka API</a>
+            <a class="nav-link" href="/dashboard/?tab=k8s" target="_blank">☸️ Kubernetes</a>
+            <a class="nav-link" href="http://localhost:8001/docs" target="_blank">📝 Swagger</a>
+            <button class="refresh-btn" onclick="loadAll()">🔄 Обновить</button>
+        </div>
+    </div>
+    <div class="search-bar">
+        <input class="search-input" id="search-order" placeholder="🔍 Order ID...">
+        <input class="search-input" id="search-trace" placeholder="🔍 Trace ID...">
+        <select class="search-select" id="search-warehouse">
+            <option value="">Все склады</option>
+        </select>
+        <select class="search-select" id="search-type">
+            <option value="">Все типы</option>
+        </select>
+        <button class="search-btn" onclick="applyFilters()">🔎 Найти</button>
+        <button class="clear-btn" onclick="clearFilters()">✕ Сброс</button>
+    </div>
+    <div class="filter-hint">Кликни на Order ID / Склад / Тип события / Сборщик чтобы отфильтровать</div>
+    <div class="active-filters" id="active-filters"></div>
+</header>
+
+<div class="container">
+    <!-- View Tabs -->
+    <div class="view-tabs">
+        <button class="view-tab active" onclick="switchView('dashboard')">📊 Dashboard</button>
+        <button class="view-tab" onclick="switchView('kanban')">📋 Kanban Board</button>
+        <button class="view-tab" onclick="switchView('kafka')">📨 Kafka</button>
+        <button class="view-tab" onclick="switchView('k8s')">☸️ Kubernetes</button>
+        <button class="view-tab" onclick="switchView('kibana')">🔍 Kibana Logs</button>
+        <button class="view-tab" onclick="switchView('redis')">🔴 Redis</button>
+    </div>
+
+    <!-- Dashboard View -->
+    <div class="view-panel active" id="view-dashboard">
+    <div class="kpi-row">
+        <div class="kpi"><div class="kpi-value" id="kpi-orders">—</div><div class="kpi-label">Заказов сегодня</div></div>
+        <div class="kpi"><div class="kpi-value" id="kpi-delivered">—</div><div class="kpi-label">Доставлено</div></div>
+        <div class="kpi"><div class="kpi-value" id="kpi-inventory">—</div><div class="kpi-label">Товаров</div></div>
+        <div class="kpi"><div class="kpi-value" id="kpi-pick-time">—</div><div class="kpi-label">Ср. время (мин)</div></div>
+        <div class="kpi"><div class="kpi-value" id="kpi-revenue">—</div><div class="kpi-label">Выручка ₽</div></div>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>📈 Воронка</h3>
+            <div id="funnel"></div>
+        </div>
+        <div class="card">
+            <h3>🕒 Период данных</h3>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+                <button class="time-btn" data-since="1h" onclick="setSince('1h')" style="background:#1e2230;border:1px solid #2a2e3d;color:#8b8fa3;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px">1 час</button>
+                <button class="time-btn" data-since="6h" onclick="setSince('6h')" style="background:#1e2230;border:1px solid #2a2e3d;color:#8b8fa3;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px">6 часов</button>
+                <button class="time-btn" data-since="24h" onclick="setSince('24h')" style="background:#1e2230;border:1px solid #2a2e3d;color:#8b8fa3;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px">24 часа</button>
+                <button class="time-btn" data-since="all" onclick="setSince('all')" style="background:#1e2230;border:1px solid #2a2e3d;color:#8b8fa3;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px">Всё</button>
+            </div>
+            <p style="font-size:10px;color:#8b8fa3;margin-top:8px">Фильтрует заказы и события по дате</p>
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+        <h3>🏭 Склады</h3>
+        <div id="warehouses"></div>
+    </div>
+
+    <div class="grid-2">
+        <div class="card">
+            <h3>📋 События <span id="event-count" style="font-size:11px;color:#8b8fa3"></span></h3>
+            <div id="events" style="max-height:450px;overflow-y:auto"></div>
+        </div>
+        <div class="card">
+            <h3>👷 Сотрудники</h3>
+            <div id="workers"></div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Kanban View -->
+    <div class="view-panel" id="view-kanban">
+        <div id="kanban-board" class="kanban-board">
+            <button class="kanban-scroll-btn left" onclick="kanbanScroll(-250)" title="Прокрутить влево">‹</button>
+            <button class="kanban-scroll-btn right" onclick="kanbanScroll(250)" title="Прокрутить вправо">›</button>
+        </div>
+    </div>
+
+    <!-- Kafka View -->
+    <div class="view-panel" id="view-kafka">
+        <div class="card" style="margin-bottom:12px">
+            <h3>📨 Kafka Topics</h3>
+            <div id="kafka-topics" style="margin-bottom:12px"></div>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+            <h3>📊 Topic Details</h3>
+            <div id="kafka-topic-details"></div>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+            <h3>👥 Consumer Groups</h3>
+            <div id="kafka-consumer-groups"></div>
+        </div>
+        <div class="card">
+            <h3>📋 Последние сообщения <span id="kafka-topic-selector" style="margin-left:8px"></span></h3>
+            <div id="kafka-messages" style="max-height:60vh;overflow-y:auto;font-family:monospace;font-size:11px"></div>
+        </div>
+    </div>
+
+    <!-- Kubernetes View -->
+    <div class="view-panel" id="view-k8s">
+        <div class="card" style="margin-bottom:12px">
+            <h3>☸️ Cluster Info</h3>
+            <div id="k8s-cluster-info"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="card">
+                <h3>🖥️ Nodes</h3>
+                <div id="k8s-nodes"></div>
+            </div>
+            <div class="card">
+                <h3>📦 Deployments</h3>
+                <div id="k8s-deployments"></div>
+            </div>
+        </div>
+        <div class="card" style="margin-bottom:12px">
+            <h3>🔲 Pods</h3>
+            <div id="k8s-pods" style="max-height:40vh;overflow-y:auto"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="card">
+                <h3>🔄 Services</h3>
+                <div id="k8s-services"></div>
+            </div>
+            <div class="card">
+                <h3>📈 HPA (Autoscaling)</h3>
+                <div id="k8s-hpa"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>⚡ Events</h3>
+            <div id="k8s-events" style="max-height:30vh;overflow-y:auto"></div>
+        </div>
+    </div>
+
+    <!-- Kibana Logs View -->
+    <div class="view-panel" id="view-kibana">
+        <div class="card" style="margin-bottom:12px">
+            <h3>🔍 Поиск логов по trace_id</h3>
+            <div style="display:flex;gap:8px;margin-top:8px">
+                <input class="search-input" id="kibana-trace-id" placeholder="Введите trace_id..." style="flex:1">
+                <button class="search-btn" onclick="searchKibanaLogs()">🔎 Найти</button>
+            </div>
+            <p style="font-size:11px;color:#8b8fa3;margin-top:8px">Ищет логи заказа в Elasticsearch через Kibana</p>
+        </div>
+        <div class="card">
+            <h3>📋 Результаты поиска</h3>
+            <div id="kibana-results" style="max-height:60vh;overflow-y:auto">
+                <p style="color:#8b8fa3">Введите trace_id для поиска логов</p>
+            </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+            <h3>🔗 Быстрые ссылки</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <a class="nav-link" href="http://localhost:5601/app/discover" target="_blank" style="font-size:12px;padding:8px 12px">📊 Kibana Discover</a>
+                <a class="nav-link" href="http://localhost:5601/app/observability/logs" target="_blank" style="font-size:12px;padding:8px 12px">📝 Logs Explorer</a>
+                <a class="nav-link" href="http://localhost:9200/_cluster/health" target="_blank" style="font-size:12px;padding:8px 12px">🟢 ES Health</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Redis View -->
+    <div class="view-panel" id="view-redis">
+        <div class="card" style="margin-bottom:12px">
+            <h3>🔴 Redis Server Info</h3>
+            <div id="redis-info"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div class="card">
+                <h3>🔑 Scan Keys</h3>
+                <div style="display:flex;gap:8px;margin-top:8px">
+                    <input class="search-input" id="redis-pattern" placeholder="Pattern: stock:*, saga:*" style="flex:1" value="*">
+                    <button class="search-btn" onclick="loadRedisKeys()">🔍 Scan</button>
+                </div>
+            </div>
+            <div class="card">
+                <h3>🔗 Quick Links</h3>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+                    <a class="nav-link" href="http://localhost:8085" target="_blank" style="font-size:12px;padding:6px 10px">📊 Redis Commander</a>
+                    <a class="nav-link" href="http://localhost:8086" target="_blank" style="font-size:12px;padding:6px 10px">🔍 RedisInsight (full)</a>
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <h3>📋 Keys <span id="redis-key-count" style="color:#8b8fa3;font-size:12px"></span></h3>
+            <div id="redis-keys" style="max-height:50vh;overflow-y:auto"></div>
+        </div>
+        <div class="modal-overlay" id="redis-value-modal">
+            <div class="modal" style="max-width:700px">
+                <h2><span id="redis-value-title">🔑 Key</span><button class="modal-close" onclick="closeRedisModal()">✕</button></h2>
+                <div id="redis-value-content"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Trace Modal -->
+<div class="modal-overlay" id="trace-modal">
+    <div class="modal">
+        <h2><span id="trace-title">📦 Trace</span><button class="modal-close" onclick="closeTrace()">✕</button></h2>
+        <div id="trace-steps"></div>
+    </div>
+</div>
+
+<!-- Worker Details Modal -->
+<div class="modal-overlay" id="worker-modal">
+    <div class="modal">
+        <h2><span id="worker-modal-title">👷 Worker</span><button class="modal-close" onclick="closeWorkerModal()">✕</button></h2>
+        <div id="worker-modal-content"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast">Скопировано!</div>
+
+<script>
+// State
+let allEvents = [];
+let filters = { order: '', trace: '', warehouse: '', type: '' };
+
+async function api(url, options = {}) {
+    try {
+        const r = await fetch(url, options);
+        if (!r.ok) {
+            console.error(`API ${url} failed: ${r.status} ${r.statusText}`);
+            return null;
+        }
+        const data = await r.json();
+        return data;
+    } catch(e) {
+        console.error(`API ${url} error:`, e);
+        return null;
+    }
+}
+
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => showToast('📋 ' + text));
+}
+
+function setFilter(key, value) {
+    filters[key] = value;
+    document.getElementById(`search-${key}`).value = value;
+    applyFilters();
+}
+
+function clearFilters() {
+    filters = { order: '', trace: '', warehouse: '', type: '' };
+    document.getElementById('search-order').value = '';
+    document.getElementById('search-trace').value = '';
+    document.getElementById('search-warehouse').value = '';
+    document.getElementById('search-type').value = '';
+    renderEvents(allEvents);
+    renderFilterTags();
+}
+
+function applyFilters() {
+    const v = (id) => { const el = document.getElementById(id); return el ? el.value : ''; };
+    filters.order = v('search-order').trim().toLowerCase();
+    filters.trace = v('search-trace').trim().toLowerCase();
+    filters.warehouse = v('search-warehouse');
+    filters.type = v('search-type');
+
+    let filtered = allEvents;
+    if (filters.order) filtered = filtered.filter(e => (e.order_id || '').toLowerCase().includes(filters.order));
+    if (filters.trace) filtered = filtered.filter(e => (e.trace_id || '').toLowerCase().includes(filters.trace));
+    if (filters.warehouse) filtered = filtered.filter(e => e.warehouse_id === filters.warehouse);
+    if (filters.type) filtered = filtered.filter(e => e.event_type === filters.type);
+
+    renderEvents(filtered);
+    renderFilterTags();
+    if (currentView === 'kanban') loadKanban();
+}
+
+function renderFilterTags() {
+    const el = document.getElementById('active-filters');
+    if (!el) return;
+    const tags = [];
+    if (filters.order) tags.push(`<span class="filter-tag">Order: ${filters.order} <span class="remove" onclick="setFilter('order','')">✕</span></span>`);
+    if (filters.trace) tags.push(`<span class="filter-tag">Trace: ${filters.trace} <span class="remove" onclick="setFilter('trace','')">✕</span></span>`);
+    if (filters.warehouse) tags.push(`<span class="filter-tag">Склад: ${filters.warehouse} <span class="remove" onclick="setFilter('warehouse','')">✕</span></span>`);
+    if (filters.type) tags.push(`<span class="filter-tag">Тип: ${filters.type} <span class="remove" onclick="setFilter('type','')">✕</span></span>`);
+    el.innerHTML = tags.join('');
+}
+
+// ── Time Filter ────────────────────────────────────────────
+let currentSince = '24h';
+const sinceOptions = { '1h': '1 час', '6h': '6 часов', '24h': '24 часа', 'all': 'Всё' };
+
+function setSince(since) {
+    currentSince = since;
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.since === since);
+    });
+    loadAll();
+}
+
+async function loadKPIs() {
+    const d = await api(`/api/dashboard/kpis?since=${currentSince}`);
+    if (!d) return;
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+    set('kpi-orders', d.orders_today || 0);
+    set('kpi-delivered', d.delivered_today || 0);
+    set('kpi-inventory', (d.total_inventory || 0).toLocaleString());
+    set('kpi-pick-time', d.avg_pick_time || '—');
+    set('kpi-revenue', (d.revenue_today || 0).toLocaleString() + ' ₽');
+}
+
+const funnelLabels = { created: 'Создано', reserved: 'Резерв', paid: 'Оплата', picked: 'Собрано', packed: 'Упаковано', shipped: 'Отгружено', delivered: 'Доставлено' };
+
+async function loadFunnel() {
+    const d = await api(`/api/dashboard/funnel?since=${currentSince}`);
+    if (!d) return;
+    const el = document.getElementById('funnel');
+    if (!el) return;
+    const entries = Object.entries(d);
+    const max = Math.max(...entries.map(([, v]) => v), 1);
+    el.innerHTML = entries.map(([key, count]) => `
+        <div class="funnel-step">
+            <div class="funnel-label"><span>${funnelLabels[key] || key}</span><span>${count}</span></div>
+            <div class="funnel-bar"><div class="funnel-fill" style="width:${count/max*100}%"></div></div>
+        </div>
+    `).join('');
+}
+
+async function loadWarehouses() {
+    const d = await api('/api/dashboard/warehouses');
+    const el = document.getElementById('warehouses');
+    if (!el) return;
+    if (!d || !d.length) { el.innerHTML = '<p style="color:#8b8fa3">Нет данных</p>'; return; }
+
+    // Populate warehouse filter
+    const sel = document.getElementById('search-warehouse');
+    if (sel) {
+        const currentVal = sel.value;
+        sel.innerHTML = '<option value="">Все склады</option>' + d.map(w => `<option value="${w.id}" ${w.id===currentVal?'selected':''}>${w.name}</option>`).join('');
+    }
+
+    el.innerHTML = d.map(w => {
+        const util = w.utilization_pct || 0;
+        const color = util > 80 ? '#e74c3c' : util > 60 ? '#f39c12' : '#2ecc71';
+        return `
+        <div class="wh-card">
+            <div class="wh-header">
+                <span class="wh-name" onclick="setFilter('warehouse','${w.id}')" title="Кликни чтобы отфильтровать">🏭 ${w.name}</span>
+                <span style="color:${color}">${util.toFixed(1)}%</span>
+            </div>
+            <div class="wh-bar"><div class="wh-fill" style="width:${util}%;background:${color}"></div></div>
+            <div class="wh-stats">
+                <span class="wh-stat" onclick="setFilter('warehouse','${w.id}')" title="Фильтровать по складу">👷 ${w.total_workers || 0}</span>
+                <span class="wh-stat" title="Заказов в обработке">📋 ${w.pending_orders || 0}</span>
+                <span class="wh-stat" title="Ёмкость">📦 ${(w.capacity_m3 || 0).toFixed(0)} м³</span>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function loadEvents() {
+    const d = await api(`/api/dashboard/events?limit=200&since=${currentSince}`);
+    const el = document.getElementById('events');
+    if (!el) return;
+    if (!d || !d.length) { allEvents = []; el.innerHTML = '<p style="color:#8b8fa3">Нет событий</p>'; return; }
+    allEvents = d;
+
+    // Populate type filter
+    const types = [...new Set(d.map(e => e.event_type))].sort();
+    const sel = document.getElementById('search-type');
+    if (sel) {
+        const currentVal = sel.value;
+        sel.innerHTML = '<option value="">Все типы</option>' + types.map(t => `<option value="${t}" ${t===currentVal?'selected':''}>${t}</option>`).join('');
+    }
+
+    applyFilters();
+}
+
+function renderEvents(events) {
+    const el = document.getElementById('events');
+    if (!el) return;
+    const countEl = document.getElementById('event-count');
+    if (countEl) countEl.textContent = `(${events.length})`;
+    if (!events.length) { el.innerHTML = '<p style="color:#8b8fa3">Нет событий по фильтру</p>'; return; }
+
+    el.innerHTML = events.map(e => {
+        const ts = (e.created_at || '').replace('T', ' ').substring(0, 19);
+        const oid = e.order_id || '—';
+        const traceHtml = e.trace_id
+            ? `<span class="trace-badge" onclick="event.stopPropagation(); copyText('${e.trace_id}')" title="Копировать trace_id">${e.trace_id.substring(0,8)}...</span>`
+            : '';
+        const whHtml = e.warehouse_id
+            ? `<span class="filter-link" onclick="event.stopPropagation(); setFilter('warehouse','${e.warehouse_id}')" title="Фильтровать по складу">${e.warehouse_id}</span>`
+            : '';
+        const typeHtml = `<span class="filter-link" onclick="event.stopPropagation(); setFilter('type','${e.event_type}')" title="Фильтровать по типу">${e.event_type}</span>`;
+        const orderHtml = `<span class="filter-link" onclick="event.stopPropagation(); setFilter('order','${oid}')" title="Фильтровать по заказу">${oid}</span>`;
+
+        return `
+        <div class="event-item" onclick="showTrace('${oid}')" title="Кликни чтобы увидеть путь заказа">
+            <span class="event-time">${ts}</span>
+            <span>${typeHtml}</span>
+            <span>${orderHtml}</span>
+            ${whHtml}
+            ${traceHtml}
+        </div>`;
+    }).join('');
+}
+
+async function showTrace(orderId) {
+    const d = await api(`/api/dashboard/trace/${orderId}`);
+    if (!d || !d.steps || !d.steps.length) { showToast('Trace не найден'); return; }
+
+    document.getElementById('trace-title').textContent = `📦 ${orderId}`;
+    const icons = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
+    document.getElementById('trace-steps').innerHTML = d.steps.map((s, i) => `
+        <div class="trace-step">
+            <div class="trace-icon">${icons[i] || (i+1)}</div>
+            <div class="trace-info">
+                <div class="trace-event">${s.event_type}</div>
+                <div class="trace-time">${(s.created_at || '').replace('T',' ').substring(0,19)}</div>
+            </div>
+            ${s.trace_id ? `<button class="trace-copy" onclick="copyText('${s.trace_id}')">📋</button>` : ''}
+        </div>
+    `).join('');
+
+    if (d.trace_id) {
+        document.getElementById('trace-steps').innerHTML += `
+            <div style="margin-top:10px;padding-top:6px;border-top:1px solid #2a2e3d;display:flex;align-items:center;gap:8px">
+                <span style="font-size:10px;color:#8b8fa3">Trace ID:</span>
+                <button class="trace-copy" style="font-size:10px;padding:2px 8px" onclick="copyText('${d.trace_id}')">${d.trace_id}</button>
+            </div>`;
+    }
+
+    document.getElementById('trace-modal').classList.add('open');
+}
+
+function showWorkerTrace(workerName) {
+    // Filter events by worker - show trace for orders associated with this worker
+    showToast('Фильтр: ' + workerName);
+}
+
+function closeTrace() { document.getElementById('trace-modal').classList.remove('open'); }
+document.getElementById('trace-modal').addEventListener('click', function(e) { if (e.target === this) closeTrace(); });
+
+const roleIcons = { picker: '🎯', packer: '📦', courier: '🚚' };
+const roleNames = { picker: 'Сборщики', packer: 'Упаковщики', courier: 'Курьеры' };
+const eventIcons = {
+    order_created: '🆕', order_completed: '🎉', order_failed: '💥', order_cancelled: '🚫',
+    inventory_reserved: '📦', inventory_failed: '⚠️', inventory_restocked: '📦↩️',
+    payment_requested: '💳', payment_succeeded: '✅💳', payment_failed: '❌💳', payment_refunded: '💰↩️',
+    picking_started: '🎯', picking_completed: '✅🎯',
+    order_packed: '📋',
+    order_shipped: '🚛',
+    delivery_assigned: '🚚', delivery_started: '🚚💨', delivery_completed: '✅🚚', delivery_cancelled: '🚫🚚',
+    sku_received: '📥', capacity_alert: '🔔',
+};
+
+async function loadWorkers() {
+    const d = await api('/api/dashboard/workers?limit=50');
+    const el = document.getElementById('workers');
+    if (!el) return; // Workers section may not exist
+    if (!d || !d.length) {
+        console.log('loadWorkers: no data or empty array', d);
+        el.innerHTML = '<p style="color:#8b8fa3">Нет данных о сотрудниках</p>';
+        return;
+    }
+    console.log('loadWorkers:', d.length, 'workers');
+
+    // Group by role
+    const groups = { picker: [], packer: [], courier: [] };
+    d.forEach(w => { if (groups[w.role]) groups[w.role].push(w); });
+
+    // Sort each group by orders_completed desc
+    Object.values(groups).forEach(g => g.sort((a, b) => (b.orders_completed || 0) - (a.orders_completed || 0)));
+
+    const hasData = Object.values(groups).some(g => g.length > 0);
+    if (!hasData) { el.innerHTML = '<p style="color:#8b8fa3">Нет данных о сотрудниках</p>'; return; }
+
+    el.innerHTML = Object.entries(groups).map(([role, workers]) => {
+        if (!workers.length) return '';
+        const icon = roleIcons[role] || '👷';
+        const name = roleNames[role] || role;
+        const rows = workers.map((w, i) => {
+            const workload = w.orders_completed || 0;
+            const barWidth = Math.min(100, workload * 10);
+            const barColor = workload === 0 ? '#8b8fa3' : (workload < 5 ? '#2ecc71' : (workload < 15 ? '#f39c12' : '#e74c3c'));
+            return `<tr class="worker-row" onclick="showWorkerDetails(${w.id})">
+                <td style="padding:3px 6px;color:#8b8fa3;font-size:10px">${i + 1}</td>
+                <td style="padding:3px 6px"><span class="filter-link" style="font-size:11px">${w.name}</span></td>
+                <td style="padding:3px 6px"><span class="role-icon">${icon}</span></td>
+                <td style="padding:3px 6px;text-align:center;font-size:11px">
+                    <div style="display:flex;align-items:center;gap:4px">
+                        <div style="flex:1;height:4px;background:#1e2230;border-radius:2px;overflow:hidden">
+                            <div style="width:${barWidth}%;height:100%;background:${barColor};border-radius:2px"></div>
+                        </div>
+                        <span style="min-width:20px;text-align:right">${workload}</span>
+                    </div>
+                </td>
+                <td style="padding:3px 6px;text-align:center"><span class="filter-link" onclick="event.stopPropagation(); setFilter('warehouse','${w.warehouse_id}')" style="font-size:10px">${w.warehouse_id || '—'}</span></td>
+            </tr>`;
+        }).join('');
+        return `<div class="worker-group">
+            <div class="worker-group-title">${icon} ${name} <span class="worker-count">(${workers.length})</span></div>
+            <table style="width:100%;border-collapse:collapse"><tr style="color:#8b8fa3;font-size:10px;border-bottom:1px solid #2a2e3d"><th style="text-align:left;padding:3px 6px">#</th><th style="text-align:left;padding:3px 6px">Имя</th><th style="padding:3px 6px"></th><th style="text-align:center;padding:3px 6px">Загруженность</th><th style="text-align:center;padding:3px 6px">Склад</th></tr>${rows}</table>
+        </div>`;
+    }).join('');
+}
+
+async function showWorkerDetails(workerId) {
+    const d = await api(`/api/dashboard/workers/${workerId}/details`);
+    if (!d) { showToast('Детали не найдены'); return; }
+
+    const icon = d.role_icon || roleIcons[d.role] || '👷';
+    document.getElementById('worker-modal-title').textContent = `${icon} ${d.name} — ${roleNames[d.role] || d.role}`;
+
+    const completedHtml = d.completed_order_ids.length
+        ? d.completed_order_ids.slice(0, 20).map(id => `<div style="font-size:11px;padding:2px 0">✅ ${id}</div>`).join('')
+        : '<div style="color:#8b8fa3;font-size:11px">Нет завершённых</div>';
+    const currentHtml = d.current_orders.length
+        ? d.current_orders.map(id => `<div style="font-size:11px;padding:2px 0">⏳ ${id}</div>`).join('')
+        : '<div style="color:#8b8fa3;font-size:11px">Свободен</div>';
+
+    const workloadColor = d.workload_pct > 100 ? '#e74c3c' : (d.workload_pct > 50 ? '#f39c12' : '#2ecc71');
+    const barWidth = Math.min(100, d.workload_pct || 0);
+
+    document.getElementById('worker-modal-content').innerHTML = `
+        <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+                <span style="color:#8b8fa3">Загруженность за день</span>
+                <span style="color:${workloadColor};font-weight:700">${d.workload_pct || 0}%</span>
+            </div>
+            <div style="height:8px;background:#1e2230;border-radius:4px;overflow:hidden">
+                <div style="width:${barWidth}%;height:100%;background:${workloadColor};border-radius:4px"></div>
+            </div>
+        </div>
+        <div class="worker-modal-stats">
+            <div class="worker-modal-stat">
+                <div class="worker-modal-stat-val">${d.completed_today || 0}</div>
+                <div class="worker-modal-stat-label">Завершено сегодня</div>
+            </div>
+            <div class="worker-modal-stat">
+                <div class="worker-modal-stat-val">${d.current_orders.length || 0}</div>
+                <div class="worker-modal-stat-label">Сейчас в работе</div>
+            </div>
+            <div class="worker-modal-stat">
+                <div class="worker-modal-stat-val">${d.avg_load_in_role || 0}</div>
+                <div class="worker-modal-stat-label">Среднее по команде</div>
+            </div>
+            <div class="worker-modal-stat">
+                <div class="worker-modal-stat-val">🏭</div>
+                <div class="worker-modal-stat-label">${d.warehouse_id || '—'}</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div style="background:#161922;border:1px solid #2a2e3d;border-radius:6px;padding:8px;max-height:300px;overflow-y:auto">
+                <div style="font-size:11px;font-weight:700;color:#2ecc71;margin-bottom:6px">✅ Завершённые заказы</div>
+                ${completedHtml}
+            </div>
+            <div style="background:#161922;border:1px solid #2a2e3d;border-radius:6px;padding:8px;max-height:300px;overflow-y:auto">
+                <div style="font-size:11px;font-weight:700;color:#f39c12;margin-bottom:6px">⏳ Текущие заказы</div>
+                ${currentHtml}
+            </div>
+        </div>
+    `;
+    document.getElementById('worker-modal').classList.add('open');
+}
+
+function closeWorkerModal() { document.getElementById('worker-modal').classList.remove('open'); }
+document.getElementById('worker-modal').addEventListener('click', function(e) { if (e.target === this) closeWorkerModal(); });
+
+async function loadChaos() {
+    const el = document.getElementById('chaos');
+    if (!el) return; // Chaos section may not exist
+    const d = await api('/api/dashboard/chaos');
+    if (!d) { el.innerHTML = '<p style="color:#8b8fa3">Недоступно</p>'; return; }
+    const scenarios = Object.entries(d).filter(([k]) => typeof d[k] === 'boolean');
+    el.innerHTML = `
+        <div class="chaos-controls">
+            ${scenarios.map(([k, v]) => `<button class="chaos-btn ${v ? 'active' : ''}" onclick="toggleChaos('${k}')">${k.replace(/_/g, ' ')}</button>`).join('')}
+        </div>
+        <p style="font-size:10px;color:#8b8fa3">Нажми чтобы переключить сценарий</p>
+    `;
+}
+
+async function toggleChaos(key) {
+    const d = await api('/api/dashboard/chaos');
+    if (!d || d[key] === undefined) return;
+    d[key] = !d[key];
+    await fetch('/api/dashboard/chaos', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(d) });
+    loadChaos();
+}
+
+async function resetBusinessData() {
+    if (!confirm('⚠️ Вы уверены?\n\nЭто удалит все заказы, события и доставки.\nСотрудники и справочные данные будут сохранены.')) return;
+
+    const btn = event.target;
+    btn.textContent = '⏳ Сбрасываю...';
+    btn.disabled = true;
+
+    try {
+        const r = await fetch('/api/dashboard/reset-business-data', { method: 'POST' });
+        const d = await r.json();
+        if (d.status === 'reset') {
+            showToast('✅ Бизнес-данные сброшены');
+            loadAll();
+        } else {
+            showToast('❌ Ошибка: ' + (d.error || 'неизвестно'));
+        }
+    } catch(e) {
+        showToast('❌ Ошибка сброса');
+    } finally {
+        btn.textContent = '🧹 Новый рабочий день (сбросить заказы)';
+        btn.disabled = false;
+    }
+}
+
+async function loadAll() {
+    // Use Promise.allSettled so one failed request doesn't break everything
+    await Promise.allSettled([loadKPIs(), loadFunnel(), loadWarehouses(), loadEvents(), loadWorkers(), loadChaos()]);
+}
+
+// ── View Switching ────────────────────────────────────────────
+let currentView = 'dashboard';
+let selectedKafkaTopic = 'fulfilment.events';
+
+function switchView(view) {
+    currentView = view;
+    document.querySelectorAll('.view-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+    document.querySelector(`.view-tab[onclick="switchView('${view}')"]`).classList.add('active');
+    document.getElementById(`view-${view}`).classList.add('active');
+    if (view === 'kanban') loadKanban();
+    if (view === 'kafka') loadKafka();
+    if (view === 'k8s') loadK8s();
+    if (view === 'kibana') loadKibanaView();
+    if (view === 'redis') loadRedisView();
+}
+
+// ── Kanban Board ──────────────────────────────────────────────
+const kanbanColumnNames = {
+    created: 'Создано',
+    reserved: 'Резерв',
+    paid: 'Оплата',
+    picked: 'Сборка',
+    packed: 'Упаковка',
+    shipped: 'Отгрузка',
+    in_delivery: 'Доставка',
+    delivered: 'Завершено',
+};
+
+function formatDuration(minutes) {
+    if (minutes < 60) return `${minutes}м`;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    return m > 0 ? `${h}ч ${m}м` : `${h}ч`;
+}
+
+function renderKanban(data) {
+    const board = document.getElementById('kanban-board');
+    if (!board) return;
+    const columns = data.columns || {};
+
+    board.innerHTML = Object.keys(kanbanColumnNames).map(key => {
+        const col = columns[key] || { count: 0, orders: [] };
+        const name = kanbanColumnNames[key];
+        const slaClass = col.orders.length > 0 && col.orders.some(o => o.sla_breach) ? 'sla-breach' : '';
+
+        let cardsHtml = '';
+        if (col.orders.length === 0) {
+            cardsHtml = '<div class="empty-col">Нет заказов</div>';
+        } else {
+            cardsHtml = col.orders.map(o => {
+                let slaClass = 'sla-ok';
+                let slaDotClass = 'ok';
+                if (o.sla_breach) { slaClass = 'sla-breach'; slaDotClass = 'breach'; }
+                else if (o.sla_remaining_minutes < 30) { slaClass = 'sla-warn'; slaDotClass = 'warn'; }
+
+                const employeeParts = [];
+                if (o.assigned_picker) employeeParts.push(`🔎 ${o.assigned_picker}`);
+                if (o.assigned_packer) employeeParts.push(`📦 ${o.assigned_packer}`);
+                if (o.assigned_courier) employeeParts.push(`🚗 ${o.assigned_courier}`);
+                const employeeHtml = employeeParts.length ? `<div class="kc-employee">${employeeParts.join(' · ')}</div>` : '';
+
+                const timeStr = o.stage_since ? (o.stage_since || '').replace('T', ' ').substring(11, 16) : '—';
+                const durationStr = formatDuration(o.stage_duration_minutes || 0);
+                const slaText = o.sla_breach ? `Просрочен` : `Осталось ${o.sla_remaining_minutes}м`;
+
+                return `
+                <div class="kanban-card ${slaClass}" onclick="showTrace('${o.order_id}')">
+                    <div class="kc-order">${o.order_id}</div>
+                    <div class="kc-warehouse">${o.warehouse_id} · ${o.items_count} шт.</div>
+                    ${employeeHtml}
+                    <div class="kc-time">${timeStr} · на этапе ${durationStr}</div>
+                    <div class="kc-sla"><span class="kc-sla-dot ${slaDotClass}"></span> ${slaText}</div>
+                </div>`;
+            }).join('');
+        }
+
+        return `
+        <div class="kanban-column">
+            <div class="kanban-header">
+                <span class="kanban-title">${name}</span>
+                <span class="kanban-count">${col.count}</span>
+            </div>
+            <div class="kanban-cards">${cardsHtml}</div>
+        </div>`;
+    }).join('');
+}
+
+async function loadKanban() {
+    const params = new URLSearchParams();
+    if (filters.warehouse) params.set('warehouse', filters.warehouse);
+    if (filters.order) params.set('search', filters.order);
+    const d = await api(`/api/dashboard/kanban?${params}`);
+    const el = document.getElementById('kanban-board');
+    if (!el) return;
+    if (!d) { el.innerHTML = '<p style="color:#8b8fa3">Нет данных</p>'; return; }
+    renderKanban(d);
+}
+
+// ── Kanban Scroll ─────────────────────────────────────────────
+function kanbanScroll(delta) {
+    const board = document.getElementById('kanban-board');
+    board.scrollBy({ left: delta, behavior: 'smooth' });
+}
+
+// Drag-to-scroll
+(function initKanbanDrag() {
+    const board = document.getElementById('kanban-board');
+    let isDown = false, startX, scrollLeft;
+
+    board.addEventListener('mousedown', function(e) {
+        // Ignore clicks on buttons and cards
+        if (e.target.closest('.kanban-scroll-btn') || e.target.closest('.kanban-card')) return;
+        isDown = true;
+        board.classList.add('dragging');
+        startX = e.pageX - board.offsetLeft;
+        scrollLeft = board.scrollLeft;
+    });
+
+    board.addEventListener('mouseleave', function() { isDown = false; board.classList.remove('dragging'); });
+    board.addEventListener('mouseup', function() { isDown = false; board.classList.remove('dragging'); });
+
+    board.addEventListener('mousemove', function(e) {
+        if (!isDown) return;
+        e.preventDefault();
+        const x = e.pageX - board.offsetLeft;
+        board.scrollLeft = scrollLeft - (x - startX);
+    });
+})();
+
+// Wheel → horizontal scroll (no Shift needed)
+document.getElementById('view-kanban').addEventListener('wheel', function(e) {
+    const board = document.getElementById('kanban-board');
+    if (board.scrollWidth > board.clientWidth) {
+        e.preventDefault();
+        board.scrollLeft += e.deltaY;
+    }
+}, { passive: false });
+
+// Enter key triggers search
+document.getElementById('search-order').addEventListener('keyup', e => { if (e.key === 'Enter') applyFilters(); });
+document.getElementById('search-trace').addEventListener('keyup', e => { if (e.key === 'Enter') applyFilters(); });
+document.getElementById('search-warehouse').addEventListener('change', applyFilters);
+document.getElementById('search-type').addEventListener('change', applyFilters);
+
+// ── Kafka View ────────────────────────────────────────────
+async function loadKafkaTopics() {
+    const el = document.getElementById('kafka-topics');
+    el.innerHTML = '<p style="color:#8b8fa3">Loading topics...</p>';
+
+    const d = await api('/api/kafka/topics');
+    console.log('Kafka topics response:', d);
+
+    if (!d) {
+        el.innerHTML = '<p style="color:#e74c3c">⚠️ Failed to load topics. Check browser console.</p>';
+        return;
+    }
+    if (!d.topics || !d.topics.length) {
+        el.innerHTML = '<p style="color:#8b8fa3">No Kafka topics found</p>';
+        return;
+    }
+
+    el.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap">' +
+        d.topics.map(t => {
+            const isSelected = t === selectedKafkaTopic;
+            return `<button class="chaos-btn ${isSelected ? 'active' : ''}" onclick="selectKafkaTopic('${t}')" style="font-size:12px;padding:6px 12px">${t}</button>`;
+        }).join('') + '</div>';
+}
+
+function selectKafkaTopic(topic) {
+    selectedKafkaTopic = topic;
+    loadKafkaTopics();
+    loadKafkaMessages();
+    loadKafkaTopicDetails();
+}
+
+async function loadKafkaTopicDetails() {
+    const el = document.getElementById('kafka-topic-details');
+    if (!el) return;
+    el.innerHTML = '<p style="color:#8b8fa3">Loading topic details...</p>';
+
+    const d = await api(`/api/kafka/topic/${encodeURIComponent(selectedKafkaTopic)}/details`);
+    console.log('Kafka topic details response:', d);
+
+    if (!d) {
+        el.innerHTML = '<p style="color:#e74c3c">⚠️ Failed to load details. Check browser console.</p>';
+        return;
+    }
+    if (d.error) {
+        el.innerHTML = `<p style="color:#8b8fa3">Topic details: ${d.error}</p>`;
+        return;
+    }
+
+    const partitionsHtml = (d.partitions || []).map(p =>
+        `<div style="display:flex;gap:12px;padding:4px 0;font-size:11px">
+            <span style="color:#6c63ff;font-weight:600">Partition ${p.partition}</span>
+            <span style="color:#8b8fa3">Messages: ${p.message_count.toLocaleString()}</span>
+            <span style="color:#8b8fa3">Range: ${p.beginning_offset} → ${p.end_offset}</span>
+        </div>`
+    ).join('');
+
+    el.innerHTML = `
+        <div style="background:#161922;border:1px solid #2a2e3d;border-radius:6px;padding:12px;margin-top:8px">
+            <div style="display:flex;gap:16px;margin-bottom:8px;font-size:12px">
+                <span style="color:#6c63ff;font-weight:600">📦 ${d.topic}</span>
+                <span style="color:#8b8fa3">Partitions: ${d.partition_count || 0}</span>
+                <span style="color:#8b8fa3">Total messages: ${(d.total_messages || 0).toLocaleString()}</span>
+            </div>
+            ${partitionsHtml || '<p style="color:#8b8fa3">No partitions info</p>'}
+        </div>`;
+}
+
+async function loadKafkaConsumerGroups() {
+    const el = document.getElementById('kafka-consumer-groups');
+    if (!el) return;
+    el.innerHTML = '<p style="color:#8b8fa3">Loading consumer groups...</p>';
+
+    const d = await api('/api/kafka/consumer-groups');
+    console.log('Kafka consumer groups response:', d);
+
+    if (!d) {
+        el.innerHTML = '<p style="color:#e74c3c">⚠️ Failed to load consumer groups. Check browser console.</p>';
+        return;
+    }
+    if (!d.groups || !d.groups.length) {
+        el.innerHTML = '<p style="color:#8b8fa3">No active consumer groups</p>';
+        return;
+    }
+
+    el.innerHTML = d.groups.map(g => {
+        if (g.error) return `<p style="color:#e74c3c">Error: ${g.error}</p>`;
+
+        const topicsHtml = Object.entries(g.topics || {}).map(([topicName, partitions]) => {
+            const totalLag = partitions.reduce((sum, p) => sum + p.lag, 0);
+            const partitionsInfo = partitions.map(p =>
+                `P${p.partition}: offset=${p.current_offset}, lag=${p.lag}`
+            ).join(' | ');
+
+            return `<div style="padding:4px 0;font-size:11px">
+                <span style="color:#2ecc71;font-weight:600">${topicName}</span>
+                <span style="color:#8b8fa3;margin-left:8px">${partitionsInfo}</span>
+                <span style="color:${totalLag > 100 ? '#e74c3c' : '#8b8fa3'};margin-left:8px">lag: ${totalLag}</span>
+            </div>`;
+        }).join('');
+
+        return `<div style="background:#161922;border:1px solid #2a2e3d;border-radius:6px;padding:10px;margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px">
+                <span style="color:#6c63ff;font-weight:600;font-size:12px">👥 ${g.group_id}</span>
+                <span style="color:${g.total_lag > 100 ? '#e74c3c' : '#8b8fa3'};font-size:12px">Total lag: ${g.total_lag}</span>
+            </div>
+            ${topicsHtml}
+        </div>`;
+    }).join('');
+}
+
+async function loadKafkaMessages() {
+    const el = document.getElementById('kafka-messages');
+    const selectorEl = document.getElementById('kafka-topic-selector');
+    selectorEl.textContent = `(${selectedKafkaTopic})`;
+
+    el.innerHTML = '<p style="color:#8b8fa3">Loading messages...</p>';
+
+    const d = await api(`/api/kafka/${encodeURIComponent(selectedKafkaTopic)}/latest?count=20`);
+    if (!d || !d.messages || !d.messages.length) {
+        el.innerHTML = `<p style="color:#8b8fa3">No messages in topic "${selectedKafkaTopic}"</p>`;
+        return;
+    }
+
+    el.innerHTML = d.messages.map((msg, i) => {
+        let valueStr = '';
+        try {
+            const parsed = typeof msg.value === 'string' ? JSON.parse(msg.value) : msg.value;
+            valueStr = JSON.stringify(parsed, null, 2);
+        } catch(e) {
+            valueStr = msg.value;
+        }
+
+        return `<div style="background:#161922;border:1px solid #2a2e3d;border-radius:6px;padding:8px;margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                <span style="color:#8b8fa3;font-size:10px">Offset: ${msg.offset} | Partition: ${msg.partition}</span>
+                <span style="color:#8b8fa3;font-size:10px">${(msg.timestamp || '').substring(0, 19)}</span>
+            </div>
+            <pre style="margin:0;white-space:pre-wrap;word-break:break-word;color:#e2e4e9">${valueStr}</pre>
+        </div>`;
+    }).join('');
+}
+
+async function loadKafka() {
+    await Promise.all([loadKafkaTopics(), loadKafkaMessages(), loadKafkaTopicDetails(), loadKafkaConsumerGroups()]);
+}
+
+// ── Kubernetes View ────────────────────────────────────────────
+async function loadK8s() {
+    await Promise.all([loadK8sClusterInfo(), loadK8sNodes(), loadK8sDeployments(), loadK8sPods(), loadK8sServices(), loadK8sHPA(), loadK8sEvents()]);
+}
+
+async function loadK8sClusterInfo() {
+    const el = document.getElementById('k8s-cluster-info');
+    const d = await api('/api/k8s/cluster-info');
+    if (!d || d.error || !d.cluster_version) {
+        el.innerHTML = d?.enabled === false
+            ? '<p style="color:#f39c12">⚠️ Kubernetes not connected. Run <code>./k8s-setup.sh create</code></p>'
+            : `<p style="color:#e74c3c">⚠️ ${d?.error || 'Failed to load'}</p>`;
+        return;
+    }
+    el.innerHTML = `<div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px">
+        <span>🏷️ <b>${d.cluster_version}</b></span>
+        <span>🖥️ Nodes: <b>${d.node_count}</b></span>
+        <span>📦 Pods: <b>${d.pod_count}</b></span>
+        <span>🔤 Namespaces: <b>${d.namespace_count}</b></span>
+        <span>⚡ CPU: <b>${d.total_cpu_cores} cores</b></span>
+        <span>💾 Memory: <b>${d.total_memory_gb} GB</b></span>
+    </div>`;
+}
+
+async function loadK8sNodes() {
+    const el = document.getElementById('k8s-nodes');
+    const d = await api('/api/k8s/nodes');
+    if (!d || !d.nodes?.length) { el.innerHTML = '<p style="color:#8b8fa3">No nodes</p>'; return; }
+    el.innerHTML = d.nodes.map(n => `<div style="padding:4px 0;font-size:11px;border-bottom:1px solid #2a2e3d">
+        <span style="color:#6c63ff;font-weight:600">${n.name}</span>
+        <span style="margin-left:8px;color:${n.status==='Ready'?'#2ecc71':'#e74c3c'}">● ${n.status}</span>
+        <span style="margin-left:8px;color:#8b8fa3">CPU: ${n.allocatable?.cpu}</span>
+        <span style="margin-left:8px;color:#8b8fa3">Mem: ${n.allocatable?.memory}</span>
+    </div>`).join('');
+}
+
+async function loadK8sDeployments() {
+    const el = document.getElementById('k8s-deployments');
+    const d = await api('/api/k8s/deployments');
+    if (!d || !d.deployments?.length) { el.innerHTML = '<p style="color:#8b8fa3">No deployments</p>'; return; }
+    el.innerHTML = d.deployments.map(dep => {
+        const ready = dep.ready_replicas || 0;
+        const desired = dep.replicas || 0;
+        const color = ready === desired ? '#2ecc71' : '#e74c3c';
+        return `<div style="padding:4px 0;font-size:11px;border-bottom:1px solid #2a2e3d;display:flex;justify-content:space-between;align-items:center">
+            <div>
+                <span style="color:#6c63ff;font-weight:600">${dep.name}</span>
+                <span style="margin-left:8px;color:#8b8fa3">${dep.image?.split(':').pop() || ''}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+                <span style="color:${color}">${ready}/${desired}</span>
+                <button class="chaos-btn" style="font-size:9px;padding:2px 6px" onclick="scaleDeployment('${dep.name}')">Scale</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+async function loadK8sPods() {
+    const el = document.getElementById('k8s-pods');
+    const d = await api('/api/k8s/pods');
+    if (!d || !d.pods?.length) { el.innerHTML = '<p style="color:#8b8fa3">No pods</p>'; return; }
+    el.innerHTML = `<table style="width:100%;font-size:11px;border-collapse:collapse">
+        <tr style="color:#8b8fa3;border-bottom:1px solid #2a2e3d">
+            <th style="text-align:left;padding:4px">Name</th>
+            <th style="text-align:left;padding:4px">Status</th>
+            <th style="text-align:left;padding:4px">Restarts</th>
+            <th style="text-align:left;padding:4px">IP</th>
+        </tr>
+        ${d.pods.map(p => `<tr style="border-bottom:1px solid #1e2230">
+            <td style="padding:4px;color:#6c63ff">${p.name}</td>
+            <td style="padding:4px;color:${p.status==='Running'?'#2ecc71':'#e74c3c'}">${p.status}</td>
+            <td style="padding:4px">${p.containers?.reduce((s,c)=>s+c.restart_count,0)||0}</td>
+            <td style="padding:4px;color:#8b8fa3">${p.ip||'-'}</td>
+        </tr>`).join('')}
+    </table>`;
+}
+
+async function loadK8sServices() {
+    const el = document.getElementById('k8s-services');
+    const d = await api('/api/k8s/services');
+    if (!d || !d.services?.length) { el.innerHTML = '<p style="color:#8b8fa3">No services</p>'; return; }
+    el.innerHTML = d.services.map(s => `<div style="padding:4px 0;font-size:11px;border-bottom:1px solid #2a2e3d">
+        <span style="color:#6c63ff;font-weight:600">${s.name}</span>
+        <span style="margin-left:8px;color:#8b8fa3">Type: ${s.type}</span>
+        <span style="margin-left:8px;color:#8b8fa3">${(s.ports||[]).map(p=>`${p.port}:${p.target_port}`).join(', ')}</span>
+    </div>`).join('');
+}
+
+async function loadK8sHPA() {
+    const el = document.getElementById('k8s-hpa');
+    const d = await api('/api/k8s/hpa');
+    if (!d || !d.hpas?.length) { el.innerHTML = '<p style="color:#8b8fa3">No HPA configured</p>'; return; }
+    el.innerHTML = d.hpas.map(h => `<div style="padding:4px 0;font-size:11px;border-bottom:1px solid #2a2e3d">
+        <span style="color:#6c63ff;font-weight:600">${h.name}</span>
+        <span style="margin-left:8px;color:#8b8fa3">→ ${h.reference}</span>
+        <span style="margin-left:8px;color:#f39c12">${h.current_replicas}/${h.max_replicas} replicas</span>
+        <span style="margin-left:8px;color:#8b8fa3">min: ${h.min_replicas}</span>
+    </div>`).join('');
+}
+
+async function loadK8sEvents() {
+    const el = document.getElementById('k8s-events');
+    const d = await api('/api/k8s/events');
+    if (!d || !d.events?.length) { el.innerHTML = '<p style="color:#8b8fa3">No events</p>'; return; }
+    el.innerHTML = d.events.slice(0, 20).map(e => {
+        const color = e.type === 'Warning' ? '#e74c3c' : '#2ecc71';
+        return `<div style="padding:3px 0;font-size:10px;border-bottom:1px solid #1e2230">
+            <span style="color:${color};font-weight:600">[${e.type}]</span>
+            <span style="color:#6c63ff;margin-left:4px">${e.reason}</span>
+            <span style="color:#8b8fa3;margin-left:4px">${e.object}</span>
+            <span style="color:#8b8fa3;margin-left:4px">${e.message?.substring(0, 80)}</span>
+            <span style="color:#8b8fa3;margin-left:8px">×${e.count}</span>
+        </div>`;
+    }).join('');
+}
+
+async function scaleDeployment(name) {
+    const replicas = prompt(`Scale deployment "${name}" to how many replicas?`, '3');
+    if (!replicas || isNaN(replicas)) return;
+    const d = await api('/api/k8s/deployments/' + name + '/scale', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ replicas: parseInt(replicas) }),
+    });
+    if (d && d.status === 'scaled') {
+        showToast(`✅ Scaled ${name} to ${replicas}`);
+        loadK8sDeployments();
+    } else {
+        showToast(`❌ Failed: ${d?.error || 'unknown'}`);
+    }
+}
+
+// ── Kibana Logs View ────────────────────────────────────────────
+async function loadKibanaView() {
+    try {
+        const r = await fetch('/api/logs/search?q=test&limit=1');
+        if (r.ok) {
+            const d = await r.json();
+            if (d.source === 'loki') {
+                document.getElementById('kibana-results').innerHTML = `<p style="color:#2ecc71">✅ Loki доступен — лёгкий стек логов</p>
+                    <p style="color:#8b8fa3;font-size:11px">Введите trace_id выше для поиска логов заказа</p>
+                    <p style="color:#8b8fa3;font-size:11px">Также: <a href="http://localhost:3000/explore" target="_blank" style="color:#6c63ff">Grafana Explore → Loki</a></p>`;
+            } else {
+                document.getElementById('kibana-results').innerHTML = `<p style="color:#f39c12">✅ Elasticsearch доступен — полный стек ELK</p>
+                    <p style="color:#8b8fa3;font-size:11px">Введите trace_id выше для поиска логов заказа</p>
+                    <p style="color:#8b8fa3;font-size:11px">Также: <a href="http://localhost:5601" target="_blank" style="color:#6c63ff">Kibana</a></p>`;
+            }
+        }
+    } catch(e) {
+        document.getElementById('kibana-results').innerHTML = `<p style="color:#e74c3c">⚠️ Log backend недоступен.<br>
+            Lite: <code>docker compose up -d loki promtail</code><br>
+            Full: <code>docker compose --profile full up -d</code></p>`;
+    }
+}
+
+async function searchKibanaLogs() {
+    const traceId = document.getElementById('kibana-trace-id').value.trim();
+    const el = document.getElementById('kibana-results');
+    if (!traceId) {
+        el.innerHTML = '<p style="color:#e74c3c">Введите trace_id для поиска</p>';
+        return;
+    }
+
+    el.innerHTML = '<p style="color:#8b8fa3">🔍 Поиск логов...</p>';
+
+    try {
+        const r = await fetch(`/api/logs/search?q=${encodeURIComponent(traceId)}&limit=50`);
+        if (!r.ok) {
+            el.innerHTML = `<p style="color:#e74c3c">Ошибка поиска: ${r.status}</p>`;
+            return;
+        }
+
+        const data = await r.json();
+        if (data.error) {
+            el.innerHTML = `<p style="color:#e74c3c">⚠️ ${data.error}<br><span style="font-size:11px">Source: ${data.source || '?'}</span></p>`;
+            return;
+        }
+
+        const hits = data.logs || [];
+        const source = data.source || '?';
+        const sourceLabel = source === 'loki' ? '🟢 Loki' : '🟡 Elasticsearch';
+
+        if (!hits.length) {
+            el.innerHTML = `<p style="color:#8b8fa3">Логи для "<b>${traceId}</b>" не найдены.<br>
+                <span style="font-size:11px">Source: ${sourceLabel}. Подождите 1-2 минуты для сбора логов.</span></p>`;
+            return;
+        }
+
+        el.innerHTML = `<p style="color:#2ecc71">✅ Найдено ${hits.length} записей <span style="font-size:11px">(${sourceLabel})</span></p>` +
+            hits.map(h => {
+                const msg = h.message || '';
+                const container = h.container || h.service || '?';
+                const ts = h.timestamp ? new Date(h.timestamp).toISOString().substring(0, 19).replace('T', ' ') : '';
+                const level = msg.includes('ERROR') ? 'ERROR' : (msg.includes('WARN') ? 'WARN' : 'INFO');
+                const levelColor = level === 'ERROR' ? '#e74c3c' : (level === 'WARN' ? '#f39c12' : '#2ecc71');
+
+                return `<div style="background:#161922;border:1px solid #2a2e3d;border-radius:6px;padding:8px;margin-bottom:6px">
+                    <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+                        <span style="color:#8b8fa3;font-size:10px">${ts}</span>
+                        <span style="color:${levelColor};font-size:10px;font-weight:600">[${level}]</span>
+                        <span style="color:#6c63ff;font-size:10px">${container}</span>
+                    </div>
+                    <pre style="margin:0;white-space:pre-wrap;word-break:break-word;color:#e2e4e9;font-size:11px">${msg.substring(0, 300)}${msg.length > 300 ? '...' : ''}</pre>
+                </div>`;
+            }).join('');
+    } catch(e) {
+        el.innerHTML = `<p style="color:#e74c3c">Ошибка: ${e.message}</p>`;
+    }
+}
+
+// ── Redis View ────────────────────────────────────────────
+async function loadRedisView() {
+    // Load Redis info
+    try {
+        const d = await api('/api/redis/info');
+        if (d && !d.error) {
+            document.getElementById('redis-info').innerHTML = `<div style="display:flex;gap:24px;flex-wrap:wrap;font-size:13px">
+                <span>🏷️ <b>${d.version}</b></span>
+                <span>👥 Clients: <b>${d.connected_clients}</b></span>
+                <span>💾 Memory: <b>${d.used_memory_human}</b></span>
+                <span>📊 Keys: <b>${d.total_keys}</b></span>
+                <span>⚡ Hits: <b>${d.keyspace_hits}</b></span>
+                <span>❌ Misses: <b>${d.keyspace_misses}</b></span>
+            </div>`;
+        } else {
+            document.getElementById('redis-info').innerHTML = '<p style="color:#e74c3c">⚠️ Redis not available</p>';
+        }
+    } catch(e) {
+        document.getElementById('redis-info').innerHTML = '<p style="color:#e74c3c">⚠️ Failed to load Redis info</p>';
+    }
+
+    loadRedisKeys();
+}
+
+async function loadRedisKeys() {
+    const pattern = document.getElementById('redis-pattern').value.trim() || '*';
+    const el = document.getElementById('redis-keys');
+    el.innerHTML = '<p style="color:#8b8fa3">Scanning keys...</p>';
+
+    const d = await api(`/api/redis/scan?pattern=${encodeURIComponent(pattern)}&count=200`);
+    if (!d || !d.keys?.length) {
+        el.innerHTML = '<p style="color:#8b8fa3">No keys found</p>';
+        document.getElementById('redis-key-count').textContent = '';
+        return;
+    }
+
+    document.getElementById('redis-key-count').textContent = `(${d.count} keys)`;
+
+    const typeColors = { string: '#2ecc71', hash: '#3498db', list: '#e67e22', set: '#9b59b6', zset: '#f39c12', none: '#8b8fa3' };
+
+    el.innerHTML = `<table style="width:100%;font-size:11px;border-collapse:collapse">
+        <tr style="color:#8b8fa3;border-bottom:1px solid #2a2e3d">
+            <th style="text-align:left;padding:4px">Key</th>
+            <th style="text-align:left;padding:4px">Type</th>
+            <th style="text-align:left;padding:4px">TTL</th>
+            <th style="text-align:left;padding:4px">Memory</th>
+            <th style="text-align:left;padding:4px"></th>
+        </tr>
+        ${d.keys.slice(0, 200).map(k => `<tr style="border-bottom:1px solid #1e2230;cursor:pointer" onclick="showRedisValue('${k.key}')">
+            <td style="padding:4px;color:#6c63ff;font-family:monospace">${k.key}</td>
+            <td style="padding:4px"><span style="color:${typeColors[k.type] || '#8b8fa3'};font-weight:600">${k.type}</span></td>
+            <td style="padding:4px;color:#8b8fa3">${k.ttl > 0 ? k.ttl + 's' : (k.ttl === -1 ? '∞' : '-')}</td>
+            <td style="padding:4px;color:#8b8fa3">${k.memory ? (k.memory / 1024).toFixed(1) + ' KB' : '-'}</td>
+            <td style="padding:4px"><button class="chaos-btn" style="font-size:9px;padding:2px 6px;background:#e74c3c;border-color:#e74c3c" onclick="event.stopPropagation();deleteRedisKey('${k.key}')">✕</button></td>
+        </tr>`).join('')}
+    </table>`;
+}
+
+async function showRedisValue(key) {
+    const d = await api(`/api/redis/get?key=${encodeURIComponent(key)}`);
+    if (!d || d.error) {
+        document.getElementById('redis-value-content').innerHTML = `<p style="color:#e74c3c">${d?.error || 'Failed to load'}</p>`;
+        return;
+    }
+
+    const typeColors = { string: '#2ecc71', hash: '#3498db', list: '#e67e22', set: '#9b59b6', zset: '#f39c12' };
+    let valueHtml = '';
+
+    if (d.type === 'string') {
+        try {
+            const parsed = JSON.parse(d.value);
+            valueHtml = `<pre style="margin:0;white-space:pre-wrap;word-break:break-word;color:#e2e4e9;font-size:11px">${JSON.stringify(parsed, null, 2)}</pre>`;
+        } catch(e) {
+            valueHtml = `<p style="color:#e2e4e9;font-size:11px">${d.value}</p>`;
+        }
+    } else if (d.type === 'hash') {
+        valueHtml = Object.entries(d.value || {}).map(([k, v]) =>
+            `<div style="padding:3px 0;border-bottom:1px solid #2a2e3d"><span style="color:#6c63ff">${k}</span>: <span style="color:#e2e4e9">${v}</span></div>`
+        ).join('');
+    } else if (d.type === 'list') {
+        valueHtml = (d.value || []).map((v, i) =>
+            `<div style="padding:3px 0;border-bottom:1px solid #2a2e3d"><span style="color:#8b8fa3">[${i}]</span> <span style="color:#e2e4e9">${v}</span></div>`
+        ).join('');
+    } else if (d.type === 'set') {
+        valueHtml = (d.value || []).map(v =>
+            `<div style="padding:3px 0;border-bottom:1px solid #2a2e3d"><span style="color:#e2e4e9">${v}</span></div>`
+        ).join('');
+    } else if (d.type === 'zset') {
+        valueHtml = (d.value || []).map(([member, score]) =>
+            `<div style="padding:3px 0;border-bottom:1px solid #2a2e3d"><span style="color:#f39c12">${score}</span>: <span style="color:#e2e4e9">${member}</span></div>`
+        ).join('');
+    }
+
+    document.getElementById('redis-value-title').textContent = `🔑 ${key}`;
+    document.getElementById('redis-value-content').innerHTML = `
+        <div style="margin-bottom:8px;font-size:12px">
+            <span style="color:${typeColors[d.type] || '#8b8fa3'};font-weight:600">${d.type}</span>
+            <span style="margin-left:12px;color:#8b8fa3">TTL: ${d.ttl > 0 ? d.ttl + 's' : (d.ttl === -1 ? '∞' : '-')}</span>
+            <span style="margin-left:12px;color:#8b8fa3">Memory: ${d.memory ? (d.memory/1024).toFixed(1) + ' KB' : '-'}</span>
+        </div>
+        ${valueHtml}`;
+    document.getElementById('redis-value-modal').classList.add('open');
+}
+
+function closeRedisModal() {
+    document.getElementById('redis-value-modal').classList.remove('open');
+}
+
+async function deleteRedisKey(key) {
+    if (!confirm(`Delete key "${key}"?`)) return;
+    const d = await api('/api/redis/delete', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ key }),
+    });
+    if (d && d.deleted) {
+        showToast(`✅ Deleted ${key}`);
+        loadRedisKeys();
+    } else {
+        showToast(`❌ Failed: ${d?.error || 'unknown'}`);
+    }
+}
+
+// ── URL Param Handling ────────────────────────────────────
+(function initFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get('tab');
+    if (tab && ['kanban', 'kafka', 'k8s', 'kibana', 'redis'].includes(tab)) {
+        switchView(tab);
+    }
+})();
+
+loadAll();
+setInterval(loadEvents, 5000);
+setInterval(loadAll, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+global:
+  scrape_interval: 5s
+
+rule_files:
+  - "alerts.yml"
+
+scrape_configs:
+  - job_name: "event-consumer"
+    static_configs:
+      - targets: ["event-consumer-service:8003"]
+
+  - job_name: "student-portal"
+    static_configs:
+      - targets: ["student-portal:8080"]
+    metrics_path: "/metrics"
+
+  - job_name: "order-service"
+    static_configs:
+      - targets: ["order-service:8001"]
+    metrics_path: "/metrics"

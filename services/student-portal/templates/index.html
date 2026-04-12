@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FulfilBox — Студенческий портал</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e4e9; min-height: 100vh; }
+        header { background: #161922; padding: 16px 24px; border-bottom: 1px solid #2a2e3d; display: flex; align-items: center; gap: 12px; }
+        header h1 { font-size: 20px; color: #6c63ff; }
+        header span { color: #8b8fa3; font-size: 13px; }
+        .tabs { display: flex; background: #161922; border-bottom: 1px solid #2a2e3d; padding: 0 24px; }
+        .tab { padding: 12px 20px; cursor: pointer; color: #8b8fa3; font-size: 14px; border-bottom: 2px solid transparent; transition: all 0.15s; }
+        .tab:hover { color: #e2e4e9; }
+        .tab.active { color: #6c63ff; border-bottom-color: #6c63ff; font-weight: 600; }
+        .content { padding: 24px; max-width: 1200px; margin: 0 auto; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        h2 { font-size: 18px; margin-bottom: 16px; }
+        .card { background: #1e2230; border: 1px solid #2a2e3d; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+        label { display: block; font-size: 13px; color: #8b8fa3; margin-bottom: 6px; }
+        input, textarea, select { background: #0f1117; border: 1px solid #2a2e3d; color: #e2e4e9; padding: 10px 12px; border-radius: 6px; font-size: 14px; width: 100%; font-family: 'JetBrains Mono', monospace; }
+        textarea { min-height: 80px; resize: vertical; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #6c63ff; }
+        button { background: #6c63ff; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px; margin-top: 8px; }
+        button:hover { background: #5a52e0; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th { text-align: left; padding: 8px 12px; background: #161922; border-bottom: 1px solid #2a2e3d; font-size: 12px; color: #8b8fa3; text-transform: uppercase; letter-spacing: 1px; }
+        td { padding: 8px 12px; border-bottom: 1px solid #1e2230; font-size: 13px; font-family: 'JetBrains Mono', monospace; }
+        tr:hover td { background: rgba(108,99,255,0.05); }
+        .result { margin-top: 12px; white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #8b8fa3; max-height: 400px; overflow-y: auto; }
+        .error { color: #e74c3c; }
+        .success { color: #2ecc71; }
+        .links-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+        .link-card { background: #1e2230; border: 1px solid #2a2e3d; border-radius: 8px; padding: 16px; text-align: center; }
+        .link-card a { color: #6c63ff; text-decoration: none; font-size: 16px; font-weight: 600; }
+        .link-card p { color: #8b8fa3; font-size: 12px; margin-top: 4px; }
+        .tag { display: inline-block; background: #2a2e3d; padding: 2px 8px; border-radius: 4px; font-size: 12px; margin: 2px; }
+        .key-link { color: #6c63ff; cursor: pointer; text-decoration: underline; }
+        .loading { color: #8b8fa3; font-style: italic; }
+    </style>
+</head>
+<body>
+<header>
+    <h1>📦 FulfilBox</h1>
+    <span>Студенческий портал</span>
+</header>
+
+<div class="tabs">
+    <div class="tab active" data-tab="kafka">📨 Kafka</div>
+    <div class="tab" data-tab="redis">🔑 Redis</div>
+    <div class="tab" data-tab="sql">🗄️ SQL</div>
+    <div class="tab" data-tab="tasks">🎓 Tasks</div>
+    <div class="tab" data-tab="links">🔗 Links</div>
+</div>
+
+<div class="content">
+    <!-- ═══════════ KAFKA ═══════════ -->
+    <div class="panel active" id="panel-kafka">
+        <h2>Kafka Topics</h2>
+        <div class="card">
+            <div id="kafka-topics" class="loading">Загрузка топиков...</div>
+        </div>
+        <div id="kafka-messages" class="card" style="display:none">
+            <h3 id="kafka-topic-title">Сообщения</h3>
+            <div class="result" id="kafka-msg-list"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════ REDIS ═══════════ -->
+    <div class="panel" id="panel-redis">
+        <h2>Redis Keys</h2>
+        <div class="card">
+            <label>Префикс ключа:</label>
+            <div style="display:flex;gap:8px">
+                <input type="text" id="redis-prefix" placeholder="stock: или event: или retry:" value="stock:">
+                <button onclick="loadRedisKeys()">Найти ключи</button>
+            </div>
+            <div class="result" id="redis-keys"></div>
+        </div>
+        <div id="redis-value-card" class="card" style="display:none">
+            <h3 id="redis-value-title">Значение</h3>
+            <div class="result" id="redis-value"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════ SQL ═══════════ -->
+    <div class="panel" id="panel-sql">
+        <h2>SQL Query</h2>
+        <div class="card">
+            <label>Запрос (только SELECT):</label>
+            <textarea id="sql-query" placeholder="SELECT * FROM events LIMIT 10">SELECT event_type, order_id, processed FROM events ORDER BY created_at DESC LIMIT 20</textarea>
+            <button onclick="executeSql()">Выполнить</button>
+            <span id="sql-row-count" style="margin-left:12px;color:#8b8fa3;font-size:13px"></span>
+        </div>
+        <div id="sql-result" class="card" style="display:none">
+            <div id="sql-table-container"></div>
+            <div class="result error" id="sql-error"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════ TASKS ═══════════ -->
+    <div class="panel" id="panel-tasks">
+        <h2>🎓 Задания для студентов</h2>
+        <div class="card" style="text-align:center;padding:32px">
+            <p style="font-size:16px;margin-bottom:16px">Интерактивные задания с прогресс-трекингом</p>
+            <p style="color:#8b8fa3;margin-bottom:20px">7 модулей: Docker → REST → Kubernetes → Redis → Kafka → Chaos → Alerts</p>
+            <a href="/tasks/" target="_blank">
+                <button style="font-size:16px;padding:12px 32px">🚀 Открыть задания</button>
+            </a>
+        </div>
+    </div>
+
+    <!-- ═══════════ LINKS ═══════════ -->
+    <div class="panel" id="panel-links">
+        <h2>Быстрые ссылки</h2>
+        <div class="links-grid">
+            <div class="link-card"><a href="http://localhost:3000" target="_blank">📊 Grafana</a><p>Дашборды и мониторинг</p></div>
+            <div class="link-card"><a href="http://localhost:9090" target="_blank">🔥 Prometheus</a><p>Метрики и алерты</p></div>
+            <div class="link-card"><a href="http://localhost:9090/alerts" target="_blank">🚨 Alerts</a><p>Список алертов</p></div>
+            <div class="link-card"><a href="http://localhost:8001/docs" target="_blank">📝 Swagger UI</a><p>Order API — Swagger</p></div>
+            <div class="link-card"><a href="http://localhost:8001/redoc" target="_blank">📖 ReDoc</a><p>Order API — ReDoc</p></div>
+            <div class="link-card"><a href="http://localhost:8003/metrics" target="_blank">📈 Consumer Metrics</a><p>Prometheus метрики</p></div>
+            <div class="link-card"><a href="http://localhost:8002" target="_blank">🔌 WS Gateway</a><p>WebSocket gateway</p></div>
+            <div class="link-card"><a href="/dashboard/" target="_blank">📊 FulfilBox Dashboard</a><p>Мониторинг складов</p></div>
+            <div class="link-card"><a href="/tasks/" target="_blank">🎓 Tasks UI</a><p>Интерактивные задания</p></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ── Tabs ──
+document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+    });
+});
+
+// ── Kafka ──
+async function loadKafkaTopics() {
+    const el = document.getElementById('kafka-topics');
+    try {
+        const resp = await fetch('/api/kafka/topics');
+        const data = await resp.json();
+        if (data.topics.length === 0) {
+            el.textContent = 'Kafka не настроена или нет доступных топиков';
+            return;
+        }
+        el.innerHTML = data.topics.map(t => `<span class="tag key-link" onclick="loadKafkaMessages('${t}')">${t}</span>`).join('');
+    } catch (e) {
+        el.textContent = 'Ошибка загрузки: ' + e.message;
+    }
+}
+
+async function loadKafkaMessages(topic) {
+    const msgCard = document.getElementById('kafka-messages');
+    const list = document.getElementById('kafka-msg-list');
+    const title = document.getElementById('kafka-topic-title');
+    msgCard.style.display = 'block';
+    title.textContent = 'Topic: ' + topic;
+    list.innerHTML = '<span class="loading">Загрузка...</span>';
+    try {
+        const resp = await fetch(`/api/kafka/${topic}/latest?count=20`);
+        const data = await resp.json();
+        if (data.messages.length === 0 || (data.messages[0].error)) {
+            list.innerHTML = data.messages[0]?.error || 'Нет сообщений';
+            return;
+        }
+        list.innerHTML = '<table><tr><th>Offset</th><th>Partition</th><th>Timestamp</th><th>Value</th></tr>' +
+            data.messages.map(m => `<tr><td>${m.offset}</td><td>${m.partition}</td><td>${m.timestamp}</td><td><pre style="margin:0;font-size:12px;max-width:500px;overflow-x:auto">${JSON.stringify(JSON.parse(m.value), null, 2)}</pre></td></tr>`).join('') + '</table>';
+    } catch (e) {
+        list.innerHTML = 'Ошибка: ' + e.message;
+    }
+}
+
+// ── Redis ──
+async function loadRedisKeys() {
+    const prefix = document.getElementById('redis-prefix').value;
+    const el = document.getElementById('redis-keys');
+    el.innerHTML = '<span class="loading">Поиск...</span>';
+    try {
+        const resp = await fetch(`/api/redis/keys?prefix=${encodeURIComponent(prefix)}`);
+        const data = await resp.json();
+        if (data.keys.length === 0) {
+            el.innerHTML = 'Ключи не найдены';
+            return;
+        }
+        el.innerHTML = data.keys.map(k => `<span class="tag key-link" onclick="loadRedisValue('${k}')">${k}</span>`).join('');
+    } catch (e) {
+        el.innerHTML = 'Ошибка: ' + e.message;
+    }
+}
+
+async function loadRedisValue(key) {
+    const card = document.getElementById('redis-value-card');
+    const el = document.getElementById('redis-value');
+    const title = document.getElementById('redis-value-title');
+    card.style.display = 'block';
+    title.textContent = 'Ключ: ' + key;
+    el.innerHTML = '<span class="loading">Загрузка...</span>';
+    try {
+        const resp = await fetch(`/api/redis/get?key=${encodeURIComponent(key)}`);
+        const data = await resp.json();
+        el.innerHTML = `<div><b>Тип:</b> ${data.type}</div><div style="margin-top:8px"><b>Значение:</b></div><pre style="margin-top:4px;white-space:pre-wrap">${data.value ? (typeof data.value === 'string' ? data.value : JSON.stringify(data.value, null, 2)) : '(null)'}</pre>`;
+    } catch (e) {
+        el.innerHTML = 'Ошибка: ' + e.message;
+    }
+}
+
+// ── SQL ──
+async function executeSql() {
+    const query = document.getElementById('sql-query').value;
+    const resultDiv = document.getElementById('sql-result');
+    const errorEl = document.getElementById('sql-error');
+    const tableDiv = document.getElementById('sql-table-container');
+    const rowCountEl = document.getElementById('sql-row-count');
+    resultDiv.style.display = 'block';
+    errorEl.textContent = '';
+    tableDiv.innerHTML = '<span class="loading">Выполнение...</span>';
+    try {
+        const resp = await fetch('/api/sql/query', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({query})
+        });
+        const data = await resp.json();
+        if (data.error) {
+            tableDiv.innerHTML = '';
+            errorEl.textContent = '❌ ' + data.error;
+            rowCountEl.textContent = '';
+            return;
+        }
+        rowCountEl.textContent = `✅ ${data.row_count} строк`;
+        if (data.rows && data.rows.length > 0) {
+            let html = '<table><tr>' + data.columns.map(c => `<th>${c}</th>`).join('') + '</tr>';
+            data.rows.forEach(row => {
+                html += '<tr>' + row.map(v => `<td>${v === null ? 'NULL' : v}</td>`).join('') + '</tr>';
+            });
+            html += '</table>';
+            tableDiv.innerHTML = html;
+        } else {
+            tableDiv.innerHTML = '<p style="color:#8b8fa3">Нет результатов</p>';
+        }
+    } catch (e) {
+        tableDiv.innerHTML = '';
+        errorEl.textContent = '❌ ' + e.message;
+    }
+}
+
+// ── Init ──
+loadKafkaTopics();
+</script>
+</body>
+</html>

@@ -1,0 +1,109 @@
+# FulfilBox Helm Chart — default values
+# Переопределяй через: helm install -f my-values.yaml
+
+namespace: fulfilbox
+imagePullPolicy: IfNotPresent
+
+# ── Infrastructure ──────────────────────────────────────────
+postgres:
+  enabled: true
+  image: postgres:16-alpine
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+redis:
+  enabled: true
+  image: redis:7-alpine
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 256Mi }
+
+zookeeper:
+  enabled: true
+  image: confluentinc/cp-zookeeper:7.5.0
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+kafka:
+  enabled: true
+  image: confluentinc/cp-kafka:7.5.0
+  resources:
+    requests: { cpu: 200m, memory: 512Mi }
+    limits: { cpu: 1000m, memory: 1024Mi }
+
+# ── Application Services ────────────────────────────────────
+orderService:
+  enabled: true
+  image: fulfilbox/order-service:latest
+  replicaCount: 1
+  port: 8001
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+eventConsumer:
+  enabled: true
+  image: fulfilbox/event-consumer-service:latest
+  replicaCount: 1
+  port: 8003
+  hpa:
+    enabled: false
+  resources:
+    requests: { cpu: 200m, memory: 256Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+simulationService:
+  enabled: true
+  image: fulfilbox/simulation-service:latest
+  replicaCount: 1
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 256Mi }
+
+wsGateway:
+  enabled: true
+  image: fulfilbox/ws-gateway:latest
+  replicaCount: 1
+  port: 8002
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 256Mi }
+
+studentPortal:
+  enabled: true
+  image: fulfilbox/student-portal:latest
+  replicaCount: 1
+  port: 8080
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+# ── Monitoring (optional) ───────────────────────────────────
+prometheus:
+  enabled: false
+
+grafana:
+  enabled: false
+
+# ── Logging ───────────────────────────────────────────────────
+loki:
+  enabled: true          # Lightweight log aggregation (default)
+
+elasticsearch:
+  enabled: false         # Heavy ELK stack (use on servers with 8+ GB RAM)
+
+kibana:
+  enabled: false
+
+# ── Secrets ─────────────────────────────────────────────────
+secrets:
+  postgresPassword: fulfilbox
+  postgresUser: fulfilbox
+  postgresDB: fulfilbox

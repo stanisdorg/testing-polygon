@@ -1,0 +1,28 @@
+{{- if .Values.simulationService.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-simulation
+  labels:
+    app: {{ .Release.Name }}-simulation
+    {{- include "fulfilbox.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.simulationService.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-simulation
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-simulation
+    spec:
+      containers:
+        - name: simulation
+          image: {{ .Values.simulationService.image }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: ORDER_SERVICE_URL
+              value: "http://{{ .Release.Name }}-order-service:8001"
+          resources:
+            {{- toYaml .Values.simulationService.resources | nindent 12 }}
+{{- end }}

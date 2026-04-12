@@ -1,0 +1,79 @@
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: kafka-consumer-alerts
+    folder: Kafka Alerts
+    interval: 10s
+    rules:
+      - uid: dlq_alert
+        title: DLQ Messages Detected
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 60
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: dlq_total > 0
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 10s
+        annotations:
+          summary: DLQ has messages
+          description: Messages are being sent to DLQ
+        labels:
+          severity: critical
+        isPaused: false
+
+      - uid: error_rate_alert
+        title: High Error Rate
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 60
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: rate(error_total[1m]) / rate(processed_total[1m]) > 0.1
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 30s
+        annotations:
+          summary: Error rate > 10%
+          description: Error rate is above 10%
+        labels:
+          severity: warning
+        isPaused: false
+
+      - uid: latency_p95_alert
+        title: High p95 Latency
+        condition: A
+        data:
+          - refId: A
+            relativeTimeRange:
+              from: 60
+              to: 0
+            datasourceUid: prometheus
+            model:
+              expr: histogram_quantile(0.95, rate(order_processing_seconds_bucket[1m])) > 0.5
+              intervalMs: 1000
+              maxDataPoints: 43200
+              refId: A
+        noDataState: NoData
+        execErrState: Error
+        for: 30s
+        annotations:
+          summary: p95 latency > 500ms
+          description: p95 latency is above 500ms
+        labels:
+          severity: warning
+        isPaused: false

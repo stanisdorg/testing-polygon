@@ -1,0 +1,25 @@
+{
+  "enabled": false,
+  "failure_scenarios": {
+    "random_delay": {
+      "enabled": true,
+      "probability": 0.1,
+      "delay_range_ms": [
+        100,
+        2000
+      ]
+    },
+    "random_failure": {
+      "enabled": false,
+      "probability": 0.05,
+      "error_message": "Warehouse timeout"
+    },
+    "inventory_mismatch": {
+      "enabled": true,
+      "affected_skus": [
+        "SKU-003"
+      ],
+      "behavior": "report_available_but_missing"
+    }
+  }
+}

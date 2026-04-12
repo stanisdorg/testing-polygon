@@ -1,0 +1,41 @@
+{{- if .Values.wsGateway.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ws-gateway
+  labels:
+    app: {{ .Release.Name }}-ws-gateway
+    {{- include "fulfilbox.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.wsGateway.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-ws-gateway
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-ws-gateway
+    spec:
+      containers:
+        - name: ws-gateway
+          image: {{ .Values.wsGateway.image }}
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          ports:
+            - containerPort: {{ .Values.wsGateway.port }}
+              name: http
+          resources:
+            {{- toYaml .Values.wsGateway.resources | nindent 12 }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-ws-gateway
+  labels:
+    app: {{ .Release.Name }}-ws-gateway
+spec:
+  ports:
+    - port: {{ .Values.wsGateway.port }}
+      targetPort: {{ .Values.wsGateway.port }}
+  selector:
+    app: {{ .Release.Name }}-ws-gateway
+{{- end }}

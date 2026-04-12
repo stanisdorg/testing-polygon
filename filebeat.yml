@@ -1,0 +1,27 @@
+# Filebeat configuration for FulfilBox
+# Collects logs from all Docker containers and sends to Elasticsearch
+
+filebeat.inputs:
+  - type: container
+    paths:
+      - "/var/lib/docker/containers/*/*.log"
+    processors:
+      - add_docker_metadata:
+          host: "unix:///var/run/docker.sock"
+      - decode_json_fields:
+          fields: ["message"]
+          target: "json"
+          overwrite_keys: true
+          when:
+            contains:
+              json.log: "{"
+
+setup.kibana:
+  host: "http://kibana:5601"
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  indices:
+    - index: "fulfilbox-logs-%{+yyyy.MM.dd}"
+
+logging.level: info

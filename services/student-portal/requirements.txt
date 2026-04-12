@@ -1,0 +1,10 @@
+fastapi==0.115.0
+uvicorn==0.30.6
+psycopg2-binary
+redis
+kafka-python
+jinja2
+python-multipart
+websockets
+prometheus-client
+kubernetes

@@ -1,0 +1,97 @@
+openapi: 3.0.3
+info:
+  title: FulfilBox — Order Service API
+  version: 0.1.0
+
+paths:
+  /api/v1/orders:
+    get:
+      summary: Получить список всех заказов
+      operationId: listOrders
+      responses:
+        "200":
+          description: Список заказов
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  orders:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        order_id:
+                          type: string
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              sku:
+                                type: string
+                              qty:
+                                type: integer
+                        delivery_address:
+                          type: string
+                        created_at:
+                          type: string
+                          format: date-time
+    post:
+      summary: Создать заказ
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - order_id
+                - items
+              properties:
+                order_id:
+                  type: string
+                  description: Уникальный идентификатор заказа
+                items:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required:
+                      - sku
+                      - qty
+                    properties:
+                      sku:
+                        type: string
+                        description: Артикул товара
+                      qty:
+                        type: integer
+                        minimum: 1
+                        description: Количество
+                delivery_address:
+                  type: string
+                  description: Адрес доставки
+      responses:
+        "201":
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - created
+                  order_id:
+                    type: string
+        "400":
+          description: Ошибка валидации
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  detail:
+                    type: string
