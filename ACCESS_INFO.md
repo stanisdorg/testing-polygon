@@ -4,9 +4,19 @@
 
 **URL:** https://localhost:8443
 
-### 🎯 Способ 1: Постоянный токен (рекомендуется)
+### 🎯 Способ 1: Kubeconfig файл (рекомендуется - без копирования)
 
-**Скопируй этот токен и используй его при каждом входе:**
+1. На странице входа выбери **"Kubeconfig"**
+2. Нажми **"Choose kubeconfig file"**
+3. Выбери файл: `/Users/mac/Documents/курс молодого бойца/testing-polygon/dashboard-kubeconfig.yaml`
+4. Нажми **Sign In**
+
+> ✅ Этот файл содержит постоянный токен - будет работать всегда!
+
+### 🔑 Способ 2: Токен
+
+1. Выбери **"Token"**
+2. Вставь этот токен:
 ```
 eyJhbGciOiJSUzI1NiIsImtpZCI6IlJjcFh4aEE5V2ZaVmVnSDhkTUwzN19mRkxtcTRJMDg4c09sRVRH
 UmM5Y0EifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZ
@@ -20,16 +30,6 @@ XRlcy1kYXNoYm9hcmQ6YWRtaW4tdXNlciJ9.WF_5zqGd2_Qbpf7NyPDRE3wq0Axq_hFMDR7ERVJMnSt2
 nwUAUCfNBls7fzi2Lt5jVlY7Vn8tIaWifmkATdDkgoLAL6sUOfuihLwB6kjahe8--9fAPjLoghD7s-Lx
 sMPMoOItOkRtVsSi9_g9EppYXSg7ktFtwdJbPYngw6ePH_3sGY2YlWPS11Yl7umkqc7JMriZoN0adwH3
 PswpD7d0JmXMg6bFM4p8nSDLsjsnFhalVNTbMoDDNju5icaHzqaLuSXz_Q
-```
-> ⚠️ **Этот токен НЕ истекает** — сохрани его и используй всегда!
-
-### 🔑 Способ 2: Kubeconfig (без копирования токена)
-
-1. На странице входа выбери **"Kubeconfig"**
-2. Нажми **"Choose kubeconfig file"**
-3. Создай файл `~/.kube/dashboard-config` с содержимым из команды:
-```bash
-kubectl get secret admin-user-token -n kubernetes-dashboard -o jsonpath='{.data.token}' | base64 -d
 ```
 
 ### 🔄 Если токен всё равно не работает
