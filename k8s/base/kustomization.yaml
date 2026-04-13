@@ -11,6 +11,7 @@ resources:
   - warehouse-consumer.yaml
   - delivery-consumer.yaml
   - saga-monitor.yaml
+  - graphql-gateway.yaml
   - other-services.yaml
 
 namespace: fulfilbox
@@ -27,4 +28,6 @@ images:
   - name: fulfilbox/saga-monitor
     newTag: latest
   - name: fulfilbox/student-portal
+    newTag: latest
+  - name: fulfilbox/graphql-gateway
     newTag: latest

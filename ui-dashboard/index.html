@@ -247,7 +247,7 @@
 
     <div class="grid-2">
         <div class="card">
-            <h3>📋 События <span id="event-count" style="font-size:11px;color:#8b8fa3"></span></h3>
+            <h3>📋 События <span id="event-count" style="font-size:11px;color:#8b8fa3"></span> <span id="ws-status" style="font-size:11px;color:#f87171;margin-left:8px">🔴 Offline</span></h3>
             <div id="events" style="max-height:450px;overflow-y:auto"></div>
         </div>
         <div class="card">
@@ -1443,7 +1443,101 @@ async function deleteRedisKey(key) {
 })();
 
 loadAll();
-setInterval(loadEvents, 5000);
+
+// ── WebSocket Real-Time Events ──────────────────────────────────────
+let ws = null;
+let wsReconnectTimer = null;
+let wsConnected = false;
+
+function updateWsStatus(connected) {
+    wsConnected = connected;
+    const badge = document.getElementById('ws-status');
+    if (badge) {
+        badge.textContent = connected ? '🟢 Online' : '🔴 Offline';
+        badge.style.color = connected ? '#4ade80' : '#f87171';
+    }
+}
+
+function connectWebSocket() {
+    if (ws) return; // уже подключено
+    const protocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${location.hostname}:${location.port || 8002}/ws/events`;
+    console.log('🔌 Connecting to WebSocket:', wsUrl);
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+        console.log('✅ WebSocket connected');
+        updateWsStatus(true);
+    };
+
+    ws.onmessage = (evt) => {
+        try {
+            const event = JSON.parse(evt.data);
+            if (event.error) return; // ignore error messages
+
+            // Добавляем событие в начало списка
+            const ts = (event.timestamp || '').replace('T', ' ').substring(0, 19);
+            const eventItem = {
+                event_type: event.event_type,
+                order_id: event.order_id,
+                trace_id: event.trace_id,
+                warehouse_id: event.payload?.warehouse_id,
+                created_at: event.timestamp,
+            };
+            allEvents.unshift(eventItem);
+
+            // Обновляем DOM
+            const el = document.getElementById('events');
+            if (el) {
+                const icons = { 'order_created': '📦', 'inventory_reserved': '📋', 'inventory_failed': '❌',
+                    'payment_succeeded': '💰', 'payment_failed': '💸', 'order_shipped': '🚚',
+                    'delivery_completed': '✅', 'delivery_cancelled': '🚫', 'order_cancelled': '↩️',
+                    'payment_refunded': '💳', 'inventory_restocked': '📥' };
+                const icon = icons[event.event_type] || '📌';
+                const oid = event.order_id || '—';
+                const newEventHtml = `
+                <div class="event-item" style="border-left: 3px solid #818cf8; animation: fadeIn 0.3s ease" onclick="showTrace('${oid}')" title="Кликни чтобы увидеть путь заказа">
+                    <span class="event-time">${ts || 'только что'}</span>
+                    <span>${icon} <strong>${event.event_type}</strong></span>
+                    <span class="filter-link">${oid}</span>
+                </div>`;
+                // Вставляем в начало, удаляем последний элемент если > 200
+                el.insertAdjacentHTML('afterbegin', newEventHtml);
+                if (el.children.length > 200) {
+                    el.removeChild(el.lastChild);
+                }
+            }
+
+            // Обновляем счётчик событий
+            const countEl = document.getElementById('event-count');
+            if (countEl) countEl.textContent = `(${allEvents.length})`;
+        } catch (err) {
+            console.warn('WebSocket parse error:', err);
+        }
+    };
+
+    ws.onclose = () => {
+        console.log('❌ WebSocket disconnected');
+        updateWsStatus(false);
+        ws = null;
+        // Переподключение через 3 секунды
+        wsReconnectTimer = setTimeout(() => connectWebSocket(), 3000);
+    };
+
+    ws.onerror = (err) => {
+        console.error('WebSocket error:', err);
+        ws.close();
+    };
+}
+
+// CSS animation для новых событий
+const style = document.createElement('style');
+style.textContent = '@keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }';
+document.head.appendChild(style);
+
+// Запускаем WebSocket при загрузке страницы
+connectWebSocket();
+
 setInterval(loadAll, 15000);
 </script>
 </body>

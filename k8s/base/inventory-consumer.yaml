@@ -19,6 +19,9 @@ spec:
           imagePullPolicy: Never
           ports:
             - containerPort: 8010
+              name: metrics
+            - containerPort: 50051
+              name: grpc
           env:
             - name: DATABASE_URL
               value: "postgresql://fulfilbox:fulfilbox@fulfilbox-postgres:5432/fulfilbox"
@@ -28,7 +31,14 @@ spec:
               value: "fulfilbox-kafka:9092"
             - name: METRICS_PORT
               value: "8010"
+            - name: GRPC_PORT
+              value: "50051"
+            - name: CONSUMER_NAME
+              value: "inventory-consumer"
             - name: SAGA_STEP_DELAY_MIN
               value: "1"
             - name: SAGA_STEP_DELAY_MAX
               value: "3"
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 500m, memory: 512Mi }

@@ -1,52 +1,100 @@
-"""WS Gateway — WebSocket сервис для realtime рассылки событий.
+"""WS Gateway — WebSocket сервис для realtime рассылки событий через Redis Pub/Sub.
 
-Принимает события через POST /publish и рассылает всем подключённым
-WebSocket клиентам.
+При подключении клиента:
+- Подписывается на канал Redis "events_stream".
+- При получении сообщения от Redis -> отправляет клиенту через ws.send().
+- При отключении клиента -> отписывается и обновляет счётчик.
 """
+import json
+import os
+import asyncio
+
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from pydantic import BaseModel
+
+import redis
+
+REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
+WS_CLIENTS_KEY = "ws_clients_count"
 
 app = FastAPI(title="FulfilBox — WS Gateway")
 
-# Хранилище подключённых клиентов
-connected_clients: list[WebSocket] = []
+
+def _get_redis_pubsub():
+    """Создаёт Redis pubsub клиент."""
+    try:
+        r = redis.from_url(REDIS_URL, decode_responses=True)
+        pubsub = r.pubsub()
+        return r, pubsub
+    except Exception:
+        return None, None
 
 
-@app.websocket("/ws")
+def _increment_clients():
+    """Увеличивает счётчик подключённых клиентов."""
+    try:
+        r = redis.from_url(REDIS_URL, decode_responses=True)
+        return r.incr(WS_CLIENTS_KEY)
+    except Exception:
+        return -1
+
+
+def _decrement_clients():
+    """Уменьшает счётчик подключённых клиентов."""
+    try:
+        r = redis.from_url(REDIS_URL, decode_responses=True)
+        val = r.decr(WS_CLIENTS_KEY)
+        if val < 0:
+            r.set(WS_CLIENTS_KEY, 0)
+        return val
+    except Exception:
+        return -1
+
+
+@app.websocket("/ws/events")
 async def websocket_endpoint(ws: WebSocket):
-    """WebSocket endpoint для клиентов (UI)."""
+    """WebSocket endpoint: подписка на Redis Pub/Sub и рассылка клиентам."""
     await ws.accept()
-    connected_clients.append(ws)
+    count = _increment_clients()
+    print(f"  🔌 WebSocket client connected (total: {count})")
+
+    r, pubsub = _get_redis_pubsub()
+    if pubsub:
+        pubsub.subscribe("events_stream")
+    else:
+        await ws.send_json({"error": "Redis connection failed"})
+
     try:
         while True:
-            # Держим соединение открытым, читаем ping'и если нужно
-            await ws.receive_text()
+            if pubsub:
+                # Запускаем listen в отдельном потоке чтобы не блокировать
+                message = await asyncio.to_thread(pubsub.get_message, ignore_subscribe_messages=True, timeout=1.0)
+                if message and message["type"] == "message":
+                    try:
+                        data = json.loads(message["data"])
+                        await ws.send_json(data)
+                    except Exception:
+                        pass
+            else:
+                # Redis недоступен — держим соединение
+                await asyncio.sleep(1)
     except WebSocketDisconnect:
-        connected_clients.remove(ws)
+        pass
+    finally:
+        if pubsub:
+            pubsub.unsubscribe("events_stream")
+            pubsub.close()
+        count = _decrement_clients()
+        print(f"  🔌 WebSocket client disconnected (total: {count})")
 
 
-class PublishEvent(BaseModel):
-    type: str
-    order_id: str
-    status: str
-    trace_id: str = ""
-
-
-@app.post("/publish", status_code=200)
-async def publish_event(event: PublishEvent):
-    """HTTP endpoint для публикации событий (вызывает Event Consumer)."""
-    message = event.model_dump()
-    disconnected = []
-
-    for client in connected_clients:
-        try:
-            await client.send_json(message)
-        except Exception:
-            disconnected.append(client)
-
-    # Чистим отключившихся клиентов
-    for client in disconnected:
-        if client in connected_clients:
-            connected_clients.remove(client)
-
-    return {"status": "published", "clients": len(connected_clients)}
+@app.get("/health")
+async def health():
+    """Health check."""
+    count = -1
+    try:
+        r = redis.from_url(REDIS_URL, decode_responses=True)
+        val = r.get(WS_CLIENTS_KEY)
+        count = int(val) if val else 0
+    except Exception:
+        pass
+    return {"status": "ok", "connected_clients": count}

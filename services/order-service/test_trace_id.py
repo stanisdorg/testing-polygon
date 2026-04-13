@@ -3,9 +3,13 @@ import json
 import uuid
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
+import main as app_module
 from main import app
 
 client = TestClient(app)
+
+# Disable rate limiting for tests
+app_module.redis_client = None
 
 
 def test_create_order_returns_trace_id():

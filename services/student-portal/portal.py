@@ -2482,6 +2482,27 @@ def dashboard_summary(request: Request = None):
         return {}
 
 
+@app.get("/api/dashboard/redis")
+def dashboard_redis():
+    """Redis statistics: memory, clients, keys count."""
+    try:
+        r = get_redis_client()
+        if r is None:
+            return {"error": "Redis not enabled"}
+
+        info_mem = r.info("memory")
+        info_clients = r.info("clients")
+        keys_count = r.dbsize()
+
+        return {
+            "memory_used": info_mem.get("used_memory_human", "unknown"),
+            "connected_clients": info_clients.get("connected_clients", 0),
+            "keys_count": keys_count,
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
 @app.get("/api/dashboard/trace/{order_id}")
 def dashboard_trace(order_id: str, request: Request = None):
     """Trace an order through the system (SAGA aware)."""

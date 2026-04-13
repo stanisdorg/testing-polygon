@@ -24,6 +24,7 @@ from shared.db_utils import (
     update_order_status,
 )
 from shared.warehouse import WarehouseService
+from shared.grpc_service import start_grpc_server, ConsumerStatusServicer
 
 # ── Config ──
 SAGA_STEP_DELAY_MIN = int(os.environ.get("SAGA_STEP_DELAY_MIN", "2"))
@@ -193,13 +194,22 @@ class InventoryConsumer(BaseConsumer):
             print(f"  ✅ Inventory reserved for {order_id}")
 
         finally:
+            # Update gRPC stats
+            ConsumerStatusServicer.update_stats(event_type or "order_created")
             # Release dedup lock
             release_dedup_lock(dedup_key)
 
 
 def main():
-    """Start the Inventory Consumer."""
+    """Start the Inventory Consumer with gRPC server."""
     print("🚀 Starting Inventory Consumer...")
+
+    # Start gRPC server in background thread
+    try:
+        start_grpc_server(port=int(os.environ.get("GRPC_PORT", "50051")))
+    except Exception as e:
+        print(f"  ⚠ Failed to start gRPC server: {e}")
+
     consumer = InventoryConsumer(
         topics=["order_events"],
         group_id="inventory-consumer-group",

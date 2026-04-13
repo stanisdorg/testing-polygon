@@ -100,7 +100,7 @@ def insert_event(
     step_name: str,
     is_compensation: bool = False,
 ):
-    """Insert event into events table (idempotent)."""
+    """Insert event into events table (idempotent) and publish to Redis pub/sub."""
     conn = get_db()
     cur = conn.cursor()
     try:
@@ -129,6 +129,21 @@ def insert_event(
     finally:
         cur.close()
         conn.close()
+
+    # Publish to Redis Pub/Sub for WebSocket real-time updates
+    publish_event_to_redis({
+        "event_type": event_type,
+        "order_id": order_id,
+        "trace_id": trace_id,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "saga_id": saga_id,
+        "step_name": step_name,
+        "is_compensation": is_compensation,
+        "payload": payload or {},
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    })
+
     return True
 
 
@@ -218,3 +233,17 @@ def acquire_dedup_lock(key: str, ttl: int = 300) -> bool:
 def release_dedup_lock(key: str):
     """Release deduplication lock."""
     redis_client.delete(key)
+
+
+# ── Redis Pub/Sub for WS Gateway ──────────────────────────────────
+REDIS_PUBSUB_CHANNEL = "events_stream"
+
+
+def publish_event_to_redis(event_data: dict) -> bool:
+    """Публикует событие в Redis Pub/Sub для рассылки через WebSocket."""
+    try:
+        redis_client.publish(REDIS_PUBSUB_CHANNEL, json.dumps(event_data))
+        return True
+    except Exception as e:
+        print(f"  ⚠ Redis pub/sub failed: {e}")
+        return False

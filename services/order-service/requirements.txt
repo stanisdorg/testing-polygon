@@ -3,3 +3,5 @@ uvicorn==0.30.6
 psycopg2-binary
 kafka-python-ng
 prometheus-client
+redis
+grpcio

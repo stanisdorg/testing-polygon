@@ -85,6 +85,66 @@ studentPortal:
     requests: { cpu: 100m, memory: 128Mi }
     limits: { cpu: 500m, memory: 512Mi }
 
+graphqlGateway:
+  enabled: true
+  image: fulfilbox/graphql-gateway:latest
+  replicaCount: 1
+  port: 8005
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+# ── Microservice Consumers (Event-Driven) ───────────────────
+inventoryConsumer:
+  enabled: true
+  image: fulfilbox/inventory-consumer:latest
+  replicaCount: 1
+  port: 8010
+  grpcPort: 50051
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+paymentConsumer:
+  enabled: true
+  image: fulfilbox/payment-consumer:latest
+  replicaCount: 1
+  port: 8011
+  grpcPort: 50052
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+warehouseConsumer:
+  enabled: true
+  image: fulfilbox/warehouse-consumer:latest
+  replicaCount: 1
+  port: 8012
+  grpcPort: 50053
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+deliveryConsumer:
+  enabled: true
+  image: fulfilbox/delivery-consumer:latest
+  replicaCount: 1
+  port: 8013
+  grpcPort: 50054
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
+sagaMonitor:
+  enabled: true
+  image: fulfilbox/saga-monitor:latest
+  replicaCount: 1
+  port: 8014
+  grpcPort: 50055
+  resources:
+    requests: { cpu: 100m, memory: 128Mi }
+    limits: { cpu: 500m, memory: 512Mi }
+
 # ── Monitoring (optional) ───────────────────────────────────
 prometheus:
   enabled: false

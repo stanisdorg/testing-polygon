@@ -82,24 +82,40 @@ EOF
     log_info "Building and loading Docker images..."
     cd "$(dirname "$0")"
 
+    # Core services
     for svc in order-service event-consumer-service simulation-service ws-gateway student-portal; do
         log_info "Building $svc..."
-        docker build -t "fulfilbox/$svc:latest" "services/$svc" -q
-        kind load docker-image "fulfilbox/$svc:latest" --name "$CLUSTER_NAME"
+        docker build -t "fulfilbox/$svc:latest" "services/$svc" -q || log_warn "Failed to build $svc"
+        kind load docker-image "fulfilbox/$svc:latest" --name "$CLUSTER_NAME" || log_warn "Failed to load $svc"
     done
+
+    # Event-driven consumers
+    for svc in inventory-consumer payment-consumer warehouse-consumer delivery-consumer saga-monitor; do
+        log_info "Building $svc..."
+        docker build -t "fulfilbox/$svc:latest" "services/$svc" -q || log_warn "Failed to build $svc"
+        kind load docker-image "fulfilbox/$svc:latest" --name "$CLUSTER_NAME" || log_warn "Failed to load $svc"
+    done
+
+    # GraphQL Gateway
+    log_info "Building graphql-gateway..."
+    docker build -t "fulfilbox/graphql-gateway:latest" "services/graphql-gateway" -q || log_warn "Failed to build graphql-gateway"
+    kind load docker-image "fulfilbox/graphql-gateway:latest" --name "$CLUSTER_NAME" || log_warn "Failed to load graphql-gateway"
 
     log_info "All images loaded!"
 
-    # Create namespace
+    # Create namespace and apply Kustomize
+    log_info "Applying Kustomize manifests..."
     kubectl create namespace "$NAMESPACE" --dry-run=client -o yaml | kubectl apply -f -
+    kubectl apply -k k8s/base/ --namespace "$NAMESPACE"
 
-    # Deploy with Helm
+    # Deploy with Helm (for additional resources)
     log_info "Deploying FulfilBox with Helm..."
     helm upgrade --install "$HELM_RELEASE" ./charts/fulfilbox \
         --namespace "$NAMESPACE" \
         --create-namespace \
         --set imagePullPolicy=Never \
-        --wait --timeout 300s
+        --set kafka.resources.requests.memory=256Mi \
+        --wait --timeout 300s || log_warn "Helm deploy failed (non-critical)"
 
     log_info "FulfilBox deployed!"
 

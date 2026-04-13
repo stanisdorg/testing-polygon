@@ -86,6 +86,10 @@ spec:
               value: "redis://fulfilbox-redis:6379/0"
             - name: KAFKA_BROKER_URL
               value: "fulfilbox-kafka:9092"
+            - name: GRAPHQL_URL
+              value: "http://fulfilbox-graphql-gateway:8005/graphql"
+            - name: WS_URL
+              value: "ws://fulfilbox-ws-gateway:8002/ws/events"
           livenessProbe:
             httpGet:
               path: /api/health

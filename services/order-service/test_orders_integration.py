@@ -2,9 +2,13 @@ import os
 import uuid
 import psycopg2
 from fastapi.testclient import TestClient
+import main as app_module
 from main import app
 
 client = TestClient(app)
+
+# Disable rate limiting for tests
+app_module.redis_client = None
 
 DB_URL = os.environ.get(
     "TEST_DATABASE_URL",
