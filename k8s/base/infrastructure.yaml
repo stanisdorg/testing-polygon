@@ -1,0 +1,206 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: fulfilbox-postgres
+  namespace: fulfilbox
+spec:
+  type: ClusterIP
+  selector:
+    app: fulfilbox-postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fulfilbox-postgres
+  namespace: fulfilbox
+spec:
+  serviceName: fulfilbox-postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fulfilbox-postgres
+  template:
+    metadata:
+      labels:
+        app: fulfilbox-postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: "fulfilbox"
+            - name: POSTGRES_PASSWORD
+              value: "fulfilbox"
+            - name: POSTGRES_DB
+              value: "fulfilbox"
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "fulfilbox"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "fulfilbox"]
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fulfilbox-redis
+  namespace: fulfilbox
+spec:
+  selector:
+    app: fulfilbox-redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fulfilbox-redis
+  namespace: fulfilbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fulfilbox-redis
+  template:
+    metadata:
+      labels:
+        app: fulfilbox-redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 6379
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fulfilbox-zookeeper
+  namespace: fulfilbox
+spec:
+  selector:
+    app: fulfilbox-zookeeper
+  ports:
+    - port: 2181
+      targetPort: 2181
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fulfilbox-zookeeper
+  namespace: fulfilbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fulfilbox-zookeeper
+  template:
+    metadata:
+      labels:
+        app: fulfilbox-zookeeper
+    spec:
+      containers:
+        - name: zookeeper
+          image: confluentinc/cp-zookeeper:7.5.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 2181
+          env:
+            - name: ZOOKEEPER_CLIENT_PORT
+              value: "2181"
+            - name: ZOOKEEPER_TICK_TIME
+              value: "2000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fulfilbox-kafka
+  namespace: fulfilbox
+spec:
+  clusterIP: None
+  selector:
+    app: fulfilbox-kafka
+  ports:
+    - port: 9092
+      targetPort: 9092
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fulfilbox-kafka
+  namespace: fulfilbox
+spec:
+  serviceName: fulfilbox-kafka
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fulfilbox-kafka
+  template:
+    metadata:
+      labels:
+        app: fulfilbox-kafka
+    spec:
+      containers:
+        - name: kafka
+          image: confluentinc/cp-kafka:7.5.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9092
+          env:
+            - name: KAFKA_NODE_ID
+              value: "1"
+            - name: KAFKA_ZOOKEEPER_CONNECT
+              value: "fulfilbox-zookeeper:2181"
+            - name: KAFKA_LISTENERS
+              value: "PLAINTEXT://0.0.0.0:9092"
+            - name: KAFKA_ADVERTISED_LISTENERS
+              value: "PLAINTEXT://fulfilbox-kafka:9092"
+            - name: KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR
+              value: "1"
+            - name: KAFKA_AUTO_CREATE_TOPICS_ENABLE
+              value: "true"
+            - name: KAFKA_PROCESS_ROLES
+              value: "broker"
+            - name: KAFKA_CONTROLLER_QUORUM_VOTERS
+              value: "1@fulfilbox-kafka:9092"
+            - name: CLUSTER_ID
+              value: "Mk3OEYOODkCBtwVm5k7K3A"
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "kafka-broker-api-versions --bootstrap-server localhost:9092"
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 5

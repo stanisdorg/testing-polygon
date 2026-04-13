@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-consumer
+  namespace: fulfilbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fulfilbox-payment-consumer
+  template:
+    metadata:
+      labels:
+        app: fulfilbox-payment-consumer
+    spec:
+      containers:
+        - name: payment-consumer
+          image: fulfilbox/payment-consumer:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8011
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://fulfilbox:fulfilbox@fulfilbox-postgres:5432/fulfilbox"
+            - name: REDIS_URL
+              value: "redis://fulfilbox-redis:6379/0"
+            - name: KAFKA_BROKER_URL
+              value: "fulfilbox-kafka:9092"
+            - name: METRICS_PORT
+              value: "8011"
+            - name: PAYMENT_SUCCESS_RATE
+              value: "0.8"
+            - name: SAGA_STEP_DELAY_MIN
+              value: "1"
+            - name: SAGA_STEP_DELAY_MAX
+              value: "3"

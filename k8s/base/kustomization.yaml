@@ -3,6 +3,28 @@ kind: Kustomization
 
 resources:
   - namespace.yaml
+  - rbac.yaml
+  - infrastructure.yaml
   - order-service.yaml
-  - event-consumer.yaml
+  - inventory-consumer.yaml
+  - payment-consumer.yaml
+  - warehouse-consumer.yaml
+  - delivery-consumer.yaml
+  - saga-monitor.yaml
   - other-services.yaml
+
+namespace: fulfilbox
+
+images:
+  - name: fulfilbox/inventory-consumer
+    newTag: latest
+  - name: fulfilbox/payment-consumer
+    newTag: latest
+  - name: fulfilbox/warehouse-consumer
+    newTag: latest
+  - name: fulfilbox/delivery-consumer
+    newTag: latest
+  - name: fulfilbox/saga-monitor
+    newTag: latest
+  - name: fulfilbox/student-portal
+    newTag: latest

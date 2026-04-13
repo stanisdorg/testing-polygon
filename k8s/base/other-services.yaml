@@ -7,18 +7,19 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: simulation-service
+      app: fulfilbox-simulation
   template:
     metadata:
       labels:
-        app: simulation-service
+        app: fulfilbox-simulation
     spec:
       containers:
         - name: simulation-service
-          image: testing-polygon-simulation-service:latest
+          image: fulfilbox/simulation-service:latest
+          imagePullPolicy: Never
           env:
             - name: ORDER_SERVICE_URL
-              value: "http://order-service:8001"
+              value: "http://fulfilbox-order-service:8001"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -29,15 +30,16 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: ws-gateway
+      app: fulfilbox-ws-gateway
   template:
     metadata:
       labels:
-        app: ws-gateway
+        app: fulfilbox-ws-gateway
     spec:
       containers:
         - name: ws-gateway
-          image: testing-polygon-ws-gateway:latest
+          image: fulfilbox/ws-gateway:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8002
 ---
@@ -48,7 +50,7 @@ metadata:
   namespace: fulfilbox
 spec:
   selector:
-    app: ws-gateway
+    app: fulfilbox-ws-gateway
   ports:
     - port: 8002
       targetPort: 8002
@@ -62,20 +64,40 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: student-portal
+      app: fulfilbox-student-portal
   template:
     metadata:
       labels:
-        app: student-portal
+        app: fulfilbox-student-portal
     spec:
+      serviceAccountName: dashboard-reader
       containers:
         - name: student-portal
-          image: testing-polygon-student-portal:latest
+          image: fulfilbox/student-portal:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8080
           env:
             - name: CONFIG_PATH
               value: "/app/config.json"
+            - name: DATABASE_URL
+              value: "postgresql://fulfilbox:fulfilbox@fulfilbox-postgres:5432/fulfilbox"
+            - name: REDIS_URL
+              value: "redis://fulfilbox-redis:6379/0"
+            - name: KAFKA_BROKER_URL
+              value: "fulfilbox-kafka:9092"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -83,8 +105,10 @@ metadata:
   name: student-portal
   namespace: fulfilbox
 spec:
+  type: NodePort
   selector:
-    app: student-portal
+    app: fulfilbox-student-portal
   ports:
     - port: 8080
       targetPort: 8080
+      nodePort: 30080

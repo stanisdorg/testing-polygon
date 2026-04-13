@@ -7,39 +7,40 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: order-service
+      app: fulfilbox-order-service
   template:
     metadata:
       labels:
-        app: order-service
+        app: fulfilbox-order-service
     spec:
       containers:
         - name: order-service
-          image: testing-polygon-order-service:latest
+          image: fulfilbox/order-service:latest
+          imagePullPolicy: Never
           ports:
             - containerPort: 8001
           env:
             - name: DATABASE_URL
-              value: "postgresql://fulfilbox:fulfilbox@postgres:5432/fulfilbox"
+              value: "postgresql://fulfilbox:fulfilbox@fulfilbox-postgres:5432/fulfilbox"
             - name: REDIS_URL
-              value: "redis://redis:6379/0"
+              value: "redis://fulfilbox-redis:6379/0"
             - name: KAFKA_BROKER_URL
-              value: "kafka:29092"
+              value: "fulfilbox-kafka:9092"
           livenessProbe:
             httpGet:
               path: /health
               port: 8001
             initialDelaySeconds: 10
-            periodSeconds: 10
+            periodSeconds: 15
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: order-service
+  name: fulfilbox-order-service
   namespace: fulfilbox
 spec:
   selector:
-    app: order-service
+    app: fulfilbox-order-service
   ports:
     - port: 8001
       targetPort: 8001

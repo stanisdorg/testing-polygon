@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: saga-monitor
+  namespace: fulfilbox
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fulfilbox-saga-monitor
+  template:
+    metadata:
+      labels:
+        app: fulfilbox-saga-monitor
+    spec:
+      containers:
+        - name: saga-monitor
+          image: fulfilbox/saga-monitor:latest
+          imagePullPolicy: Never
+          command: ["python", "monitor.py"]
+          ports:
+            - containerPort: 8014
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://fulfilbox:fulfilbox@fulfilbox-postgres:5432/fulfilbox"
+            - name: REDIS_URL
+              value: "redis://fulfilbox-redis:6379/0"
+            - name: KAFKA_BROKER_URL
+              value: "fulfilbox-kafka:9092"
+            - name: METRICS_PORT
+              value: "8014"
+            - name: COMPENSATION_DELAY
+              value: "0"

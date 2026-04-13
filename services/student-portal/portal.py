@@ -1472,7 +1472,9 @@ def api_logs_search(q: str = "", source: str = "auto", limit: int = 50, request:
 
 @app.get("/", response_class=HTMLResponse)
 def index(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request, "config": config})
+    # Redirect to Dashboard by default
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/dashboard/", status_code=302)
 
 
 # ═══════════════════════════════════════════════════════════
