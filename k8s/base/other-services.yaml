@@ -90,6 +90,10 @@ spec:
               value: "http://fulfilbox-graphql-gateway:8005/graphql"
             - name: WS_URL
               value: "ws://fulfilbox-ws-gateway:8002/ws/events"
+            - name: UI_DASHBOARD_DIR
+              value: "/app/ui-dashboard"
+            - name: UI_TASKS_DIR
+              value: "/app/ui-tasks"
           livenessProbe:
             httpGet:
               path: /api/health
