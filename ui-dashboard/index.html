@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FulfilBox — Dashboard</title>
+    <link rel="icon" type="image/svg+xml" href="/dashboard/static/favicon.svg">
+    <link rel="icon" type="image/png" href="/dashboard/static/favicon.svg">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0f1117; color: #e2e4e9; }
@@ -184,6 +186,7 @@
             <a class="nav-link" href="/dashboard/?tab=k8s" target="_blank">☸️ Kubernetes</a>
             <a class="nav-link" href="http://localhost:8001/docs" target="_blank">📝 Swagger</a>
             <button class="refresh-btn" onclick="loadAll()">🔄 Обновить</button>
+            <button class="refresh-btn" onclick="resetBusinessData()" style="margin-left:6px;background:#e74c3c;color:#fff;border:none;">🧹 Сбросить всё</button>
         </div>
     </div>
     <div class="search-bar">

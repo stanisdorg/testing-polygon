@@ -234,6 +234,29 @@ class DeliveryConsumer(BaseConsumer):
                 update_delivery_status(order_id, "delivered")
                 # Mark order as COMPLETED
                 update_order_status(order_id, "COMPLETED")
+                
+                # Publish order_completed event for Funnel/Dashboard consistency
+                insert_event(
+                    event_type="order_completed",
+                    order_id=order_id,
+                    payload={},
+                    trace_id=trace_id,
+                    entity_type="order",
+                    entity_id=order_id,
+                    saga_id=saga_id,
+                    step_name="order_completed",
+                )
+                publish_kafka_event(
+                    topic="delivery_events",
+                    event_type="order_completed",
+                    order_id=order_id,
+                    payload={},
+                    trace_id=trace_id,
+                    entity_type="order",
+                    entity_id=order_id,
+                    saga_id=saga_id,
+                    step_name="order_completed",
+                )
 
             print(f"  ✅ Delivery completed for {order_id}")
 

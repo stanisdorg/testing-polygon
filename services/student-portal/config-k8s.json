@@ -1,0 +1,34 @@
+{
+  "kafka": {
+    "enabled": true,
+    "bootstrap_servers": "fulfilbox-kafka:9092",
+    "topics": ["order_events", "fulfilment.events", "order_events_dlq"],
+    "readonly": true
+  },
+  "redis": {
+    "enabled": true,
+    "url": "redis://fulfilbox-redis:6379/0",
+    "readonly": true,
+    "allowed_keys_prefix": ["stock:", "event:", "retry:", "load:"]
+  },
+  "postgres": {
+    "enabled": true,
+    "url": "postgresql://fulfilbox:fulfilbox@fulfilbox-postgres:5432/fulfilbox",
+    "max_rows": 500,
+    "allowed_tables": ["orders", "events", "products", "inventory", "warehouses", "employees", "vehicles", "deliveries", "payments", "order_items"],
+    "blocked_keywords": ["DROP", "DELETE", "UPDATE", "INSERT", "TRUNCATE", "ALTER", "CREATE", "GRANT"]
+  },
+  "sentry": {
+    "enabled": false,
+    "dsn": "",
+    "org_slug": ""
+  },
+  "kubernetes": {
+    "enabled": false,
+    "kubeconfig_path": "",
+    "dashboard_url": ""
+  },
+  "rate_limit": {
+    "max_requests_per_minute": 120
+  }
+}

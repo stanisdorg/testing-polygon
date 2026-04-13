@@ -1750,11 +1750,13 @@ async def api_reset_business_data(request: Request = None):
         conn.commit()
         cur.close()
         conn.close()
-        # Also clear Redis worker loads
+        # Also clear Redis worker loads and rate limits
         try:
             client = get_redis_client()
             if client:
                 for key in client.scan_iter(match="load:*"):
+                    client.delete(key)
+                for key in client.scan_iter(match="rate_limit:*"):
                     client.delete(key)
         except Exception:
             pass
@@ -2218,8 +2220,8 @@ _SAGA_STAGE_MAP = {
     "delivery_completed": "delivered",
     "delivery_cancelled": "delivered",
     "order_completed": "delivered",
-    "order_cancelled": "delivered",
-    "order_failed": "delivered",
+    "order_cancelled": "created",
+    "order_failed": "created",
 }
 
 # Canonical column order for the Kanban board

@@ -53,7 +53,7 @@ def _cache_delete(pattern: str):
         pass
 
 # ── Rate Limiting ─────────────────────────────────────────────────────
-RATE_LIMIT = 5  # requests per window
+RATE_LIMIT = 50  # requests per window
 RATE_WINDOW = 60  # seconds
 
 def _check_rate_limit(ip: str) -> tuple[bool, int]:
@@ -430,7 +430,7 @@ def create_order(body: CreateOrderRequest, request: Request):
     )
     items_json = json.dumps([i.model_dump() for i in body.items])
     cur.execute(
-        "INSERT INTO order_items (order_id, sku, quantity) VALUES " + ", ".join(["(%s, %s, %s)"] * len(body.items)),
+        "INSERT INTO order_items (order_id, sku, qty) VALUES " + ", ".join(["(%s, %s, %s)"] * len(body.items)),
         [val for i in body.items for val in (body.order_id, i.sku, i.qty)]
     )
     event = {
