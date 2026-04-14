@@ -22,6 +22,7 @@ from shared.db_utils import (
     publish_kafka_event,
     redis_client,
     update_order_status,
+    get_order,
 )
 from shared.warehouse import WarehouseService
 from shared.grpc_service import start_grpc_server, ConsumerStatusServicer

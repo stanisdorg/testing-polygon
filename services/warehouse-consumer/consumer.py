@@ -24,6 +24,7 @@ from shared.db_utils import (
     publish_kafka_event,
     redis_client,
     get_db,
+    get_order,
 )
 
 # ── Config ──

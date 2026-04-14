@@ -20,6 +20,7 @@ from shared.db_utils import (
     insert_event,
     publish_kafka_event,
     update_order_status,
+    get_order,
 )
 
 # ── Config ──

@@ -24,6 +24,7 @@ from shared.db_utils import (
     redis_client,
     get_db,
     update_order_status,
+    get_order,
 )
 
 # ── Config ──
