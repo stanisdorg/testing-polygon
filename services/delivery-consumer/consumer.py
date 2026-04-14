@@ -147,6 +147,13 @@ class DeliveryConsumer(BaseConsumer):
             print(f"  ⚠ Duplicate event detected, skipping: {order_id}")
             return
 
+        # Check if order was already cancelled
+        order = get_order(order_id)
+        if order and order.get("status") in ("CANCELLED", "FAILED"):
+            print(f"  ⚠ Order {order_id} is {order['status']}, skipping")
+            release_dedup_lock(dedup_key)
+            return
+
         courier_name = None
 
         try:
