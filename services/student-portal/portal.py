@@ -1922,7 +1922,7 @@ def dashboard_alerts(limit: int = 10, request: Request = None):
 
 @app.get("/api/dashboard/funnel")
 def dashboard_funnel(since: str = "24h", request: Request = None):
-    """Order funnel with time filter — uses current_stage from orders for perfect sync."""
+    """Order funnel — cumulative count of orders that passed each stage."""
     start = time.time()
     conn = _get_dashboard_conn()
     if not conn:
@@ -1931,9 +1931,9 @@ def dashboard_funnel(since: str = "24h", request: Request = None):
         cur = conn.cursor()
         time_cond = _since_to_sql(since)
         
-        # Map event types to cumulative funnel stages
-        # Each stage counts orders that have reached AT LEAST this stage
-        stage_map = [
+        # Funnel stages: each counts orders that reached AT LEAST this stage
+        # Uses events table for accurate cumulative counting
+        stages = [
             ("created", "order_created"),
             ("reserved", "inventory_reserved"),
             ("paid", "payment_succeeded"),
@@ -1943,36 +1943,28 @@ def dashboard_funnel(since: str = "24h", request: Request = None):
             ("delivered", "order_completed"),
         ]
         
-        raw_counts = {}
-        for key, event_type in stage_map:
+        result = {}
+        for key, event_type in stages:
             cur.execute(
-                f"SELECT COUNT(*) FROM orders "
-                f"WHERE current_stage = %s AND created_at >= {time_cond}",
+                f"SELECT COUNT(DISTINCT order_id) FROM events "
+                f"WHERE event_type = %s AND is_compensation = FALSE "
+                f"AND created_at >= {time_cond}",
                 (event_type,),
             )
-            raw_counts[key] = cur.fetchone()[0] or 0
-        
-        # Also count orders that have progressed PAST this stage
-        # (e.g. order_completed orders should also count for "shipped", "packed", etc.)
-        cumulative = {}
-        for i, (key, event_type) in enumerate(stage_map):
-            # Sum all orders at this stage and all later stages
-            cumulative[key] = sum(
-                raw_counts[k] for k, _ in stage_map[i:]
-            )
+            result[key] = cur.fetchone()[0] or 0
         
         cur.close()
         conn.close()
         
-        # Enforce monotonicity
-        result = {}
+        # Enforce monotonicity: funnel can only go down
+        final = {}
         prev = float("inf")
-        for key, _ in stage_map:
-            result[key] = min(cumulative[key], prev)
-            prev = result[key]
+        for key, _ in stages:
+            final[key] = min(result[key], prev)
+            prev = final[key]
 
         db_query_duration_seconds.labels(query_type="funnel").observe(time.time() - start)
-        return result
+        return final
     except Exception:
         return {}
 
