@@ -53,7 +53,7 @@ def _cache_delete(pattern: str):
         pass
 
 # ── Rate Limiting ─────────────────────────────────────────────────────
-RATE_LIMIT = 50  # requests per window
+RATE_LIMIT = 500  # requests per window
 RATE_WINDOW = 60  # seconds
 
 def _check_rate_limit(ip: str) -> tuple[bool, int]:
