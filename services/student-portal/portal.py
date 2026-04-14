@@ -1781,7 +1781,8 @@ def dashboard_kpis(since: str = "24h", request: Request = None):
 
         cur.execute(f"SELECT COUNT(*) FROM orders WHERE created_at >= {time_cond}")
         orders_today = cur.fetchone()[0] or 0
-        cur.execute(f"SELECT COUNT(*) FROM orders WHERE status = 'COMPLETED' AND created_at >= {time_cond}")
+        # Count delivered via events table (synced with funnel)
+        cur.execute(f"SELECT COUNT(DISTINCT order_id) FROM events WHERE event_type = 'order_completed' AND is_compensation = FALSE AND created_at >= {time_cond}")
         delivered_today = cur.fetchone()[0] or 0
         cur.execute("SELECT COUNT(*) FROM orders WHERE status = 'FAILED' OR status = 'CANCELLED'")
         failed = cur.fetchone()[0] or 0
@@ -1932,7 +1933,7 @@ def dashboard_funnel(since: str = "24h", request: Request = None):
         time_cond = _since_to_sql(since)
         
         # Funnel stages: each counts orders that reached AT LEAST this stage
-        # Uses events table for accurate cumulative counting
+        # Uses orders.current_stage for consistency with KPI
         stages = [
             ("created", "order_created"),
             ("reserved", "inventory_reserved"),
@@ -1945,11 +1946,16 @@ def dashboard_funnel(since: str = "24h", request: Request = None):
         
         result = {}
         for key, event_type in stages:
+            # Count orders that have reached this stage OR passed through it
+            # Check current_stage, events, OR order status for legacy orders
             cur.execute(
-                f"SELECT COUNT(DISTINCT order_id) FROM events "
-                f"WHERE event_type = %s AND is_compensation = FALSE "
-                f"AND created_at >= {time_cond}",
-                (event_type,),
+                f"SELECT COUNT(*) FROM orders "
+                f"WHERE created_at >= {time_cond} AND ("
+                f"  current_stage = %s OR "
+                f"  status = 'COMPLETED' OR "
+                f"  EXISTS(SELECT 1 FROM events e WHERE e.order_id = orders.id AND e.event_type = %s AND e.is_compensation = FALSE)"
+                f")",
+                (event_type, event_type),
             )
             result[key] = cur.fetchone()[0] or 0
         
