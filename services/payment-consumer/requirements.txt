@@ -3,3 +3,5 @@ redis
 kafka-python
 prometheus-client
 pytest
+grpcio
+protobuf
