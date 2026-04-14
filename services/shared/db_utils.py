@@ -120,6 +120,11 @@ def insert_event(
                 is_compensation,
             ),
         )
+        # Update current_stage in orders for dashboard sync
+        cur.execute(
+            "UPDATE orders SET current_stage = %s WHERE id = %s",
+            (event_type, order_id),
+        )
         conn.commit()
         print(f"  💾 Event saved to DB: {event_type} for {order_id}")
     except psycopg2.errors.UniqueViolation:

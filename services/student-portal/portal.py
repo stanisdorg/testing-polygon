@@ -1922,7 +1922,7 @@ def dashboard_alerts(limit: int = 10, request: Request = None):
 
 @app.get("/api/dashboard/funnel")
 def dashboard_funnel(since: str = "24h", request: Request = None):
-    """Order funnel with time filter — distinct orders per stage, enforced monotonically non-increasing."""
+    """Order funnel with time filter — uses current_stage from orders for perfect sync."""
     start = time.time()
     conn = _get_dashboard_conn()
     if not conn:
@@ -1930,32 +1930,45 @@ def dashboard_funnel(since: str = "24h", request: Request = None):
     try:
         cur = conn.cursor()
         time_cond = _since_to_sql(since)
-        # Count distinct orders that have reached each stage
-        stages = {
-            "created": "order_created",
-            "reserved": "inventory_reserved",
-            "paid": "payment_succeeded",
-            "picked": "picking_completed",
-            "packed": "order_packed",
-            "shipped": "order_shipped",
-            "delivered": "order_completed",
-        }
+        
+        # Map event types to cumulative funnel stages
+        # Each stage counts orders that have reached AT LEAST this stage
+        stage_map = [
+            ("created", "order_created"),
+            ("reserved", "inventory_reserved"),
+            ("paid", "payment_succeeded"),
+            ("picked", "picking_completed"),
+            ("packed", "order_packed"),
+            ("shipped", "order_shipped"),
+            ("delivered", "order_completed"),
+        ]
+        
         raw_counts = {}
-        for key, etype in stages.items():
+        for key, event_type in stage_map:
             cur.execute(
-                f"SELECT COUNT(DISTINCT order_id) FROM events "
-                f"WHERE event_type=%s AND is_compensation=FALSE AND created_at >= {time_cond}",
-                (etype,),
+                f"SELECT COUNT(*) FROM orders "
+                f"WHERE current_stage = %s AND created_at >= {time_cond}",
+                (event_type,),
             )
             raw_counts[key] = cur.fetchone()[0] or 0
+        
+        # Also count orders that have progressed PAST this stage
+        # (e.g. order_completed orders should also count for "shipped", "packed", etc.)
+        cumulative = {}
+        for i, (key, event_type) in enumerate(stage_map):
+            # Sum all orders at this stage and all later stages
+            cumulative[key] = sum(
+                raw_counts[k] for k, _ in stage_map[i:]
+            )
+        
         cur.close()
         conn.close()
-
-        # Enforce monotonicity: each stage ≤ previous stage
+        
+        # Enforce monotonicity
         result = {}
         prev = float("inf")
-        for key in stages:
-            result[key] = min(raw_counts[key], prev)
+        for key, _ in stage_map:
+            result[key] = min(cumulative[key], prev)
             prev = result[key]
 
         db_query_duration_seconds.labels(query_type="funnel").observe(time.time() - start)
@@ -2274,39 +2287,29 @@ def dashboard_kanban(
 
         base_where = " AND ".join(where_parts) if where_parts else "TRUE"
 
-        # ── Determine current stage per order ──────────────────────
-        # We take the last (most recent) event for each order to decide
-        # which Kanban column it belongs to. Also grab payload for
-        # employee assignments (picker, packer).
+        # ── Get current stage directly from orders.current_stage ───
+        # Simple and always in sync with dashboard funnel
         cur.execute(f"""
-            WITH last_event AS (
-                SELECT DISTINCT ON (e.order_id)
-                    e.order_id,
-                    e.event_type,
-                    e.created_at AS stage_created_at,
-                    e.is_compensation,
-                    e.payload
+            SELECT
+                o.id AS order_id,
+                o.status,
+                o.warehouse_id,
+                o.created_at,
+                o.total_price,
+                o.current_stage AS current_event_type,
+                o.created_at AS stage_since,
+                FALSE AS is_compensation,
+                lp.payload AS last_payload
+            FROM orders o
+            LEFT JOIN LATERAL (
+                SELECT e.payload
                 FROM events e
-                ORDER BY e.order_id, e.id DESC
-            ),
-            order_data AS (
-                SELECT
-                    o.id AS order_id,
-                    o.status,
-                    o.warehouse_id,
-                    o.created_at,
-                    o.total_price,
-                    le.event_type AS current_event_type,
-                    le.stage_created_at AS stage_since,
-                    le.is_compensation,
-                    le.payload AS last_payload
-                FROM orders o
-                LEFT JOIN last_event le ON le.order_id = o.id
-                WHERE {base_where}
-            )
-            SELECT *
-            FROM order_data
-            ORDER BY stage_since DESC NULLS LAST
+                WHERE e.order_id = o.id AND e.is_compensation = FALSE
+                ORDER BY e.id DESC
+                LIMIT 1
+            ) lp ON TRUE
+            WHERE {base_where}
+            ORDER BY o.created_at DESC
         """, params)
 
         rows = cur.fetchall()

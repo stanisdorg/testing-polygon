@@ -425,7 +425,7 @@ def create_order(body: CreateOrderRequest, request: Request):
     cur = conn.cursor()
     # Таблица использует 'id' вместо 'order_id'
     cur.execute(
-        "INSERT INTO orders (id, status, warehouse_id) VALUES (%s, 'created', %s)",
+        "INSERT INTO orders (id, status, warehouse_id, current_stage) VALUES (%s, 'created', %s, 'order_created')",
         (body.order_id, body.warehouse_id),
     )
     items_json = json.dumps([i.model_dump() for i in body.items])
